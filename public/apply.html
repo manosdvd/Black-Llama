@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camp Lawton 2026 Staff Application</title>
+  <meta name="description" content="Official Catalina Council staff application for the 2026 Camp Lawton summer camp season. Apply for camp management, director, counselor, or support positions.">
+  <link rel="icon" type="image/png" href="cl-logo-1x1.png">
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheets -->
+  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="apply.css">
+</head>
+<body>
+  <!-- Particle Canvas for Campfire Embers -->
+  <canvas id="emberCanvas"></canvas>
+
+  <div class="app-container apply-container">
+    <!-- Header Area -->
+    <header class="main-header">
+      <div class="branding">
+        <a href="/" style="text-decoration: none; display: flex; align-items: center; gap: 1.25rem;">
+          <div class="logo-container">
+            <img src="cl-logo.png" alt="Camp Lawton Logo" class="camp-logo" width="90" height="60">
+          </div>
+          <div class="branding-text">
+            <span class="council-tag">Catalina Council — Scouting America</span>
+            <h1 style="font-size: 1.8rem;">CAMP LAWTON</h1>
+          </div>
+        </a>
+      </div>
+      
+      <div class="camp-status-card glass-panel" style="max-inline-size: 300px; padding: 0.75rem 1.25rem;">
+        <a href="/" class="btn btn-secondary" style="justify-content: center; width: 100%; font-size: 0.75rem; padding: 0.5rem 1rem;">
+          🎛️ Back to Dashboard
+        </a>
+      </div>
+    </header>
+
+    <!-- Stepper Progress Bar -->
+    <div class="stepper-container">
+      <div class="stepper-line"></div>
+      <div class="stepper-line-progress" id="stepperProgress"></div>
+      <div class="step-node active" data-step="1" data-label="Profile">1</div>
+      <div class="step-node" data-step="2" data-label="Preferences">2</div>
+      <div class="step-node" data-step="3" data-label="Experience">3</div>
+      <div class="step-node" data-step="4" data-label="Agreements">4</div>
+      <div class="step-node" data-step="5" data-label="Review">5</div>
+    </div>
+
+    <!-- Main Wizard Card -->
+    <main class="glass-panel wizard-card highlight-border">
+      <form id="staffAppForm" novalidate>
+        
+        <!-- STEP 1: Applicant Demographics & Legal Eligibility (Section I) -->
+        <div class="form-step active" id="step1">
+          <h2 class="form-section-title">Step 1: Applicant Profile</h2>
+          <p class="form-section-subtitle">SECTION I: Demographics & Legal Eligibility</p>
+          
+          <div class="form-grid">
+            <div class="form-group col-4">
+              <label for="firstName">Legal First Name<span class="required">*</span></label>
+              <input type="text" id="firstName" name="firstName" required placeholder="John">
+              <span class="error-message hidden" id="firstNameErr">First name is required.</span>
+            </div>
+            <div class="form-group col-4">
+              <label for="middleName">Middle Name</label>
+              <input type="text" id="middleName" name="middleName" placeholder="Edward">
+            </div>
+            <div class="form-group col-4">
+              <label for="lastName">Last Name<span class="required">*</span></label>
+              <input type="text" id="lastName" name="lastName" required placeholder="Doe">
+              <span class="error-message hidden" id="lastNameErr">Last name is required.</span>
+            </div>
+            
+            <div class="form-group col-4">
+              <label for="preferredName">Preferred Name / Nickname</label>
+              <input type="text" id="preferredName" name="preferredName" placeholder="Johnny">
+            </div>
+            <div class="form-group col-4">
+              <label for="phone">Phone Number<span class="required">*</span></label>
+              <input type="tel" id="phone" name="phone" required placeholder="(520) 555-0199">
+              <span class="error-message hidden" id="phoneErr">Phone number is required.</span>
+            </div>
+            <div class="form-group col-4">
+              <label for="email">Email Address<span class="required">*</span></label>
+              <input type="email" id="email" name="email" required placeholder="john.doe@example.com">
+              <span class="error-message hidden" id="emailErr">Please enter a valid email address.</span>
+            </div>
+
+            <div class="form-group col-6">
+              <label for="address">Primary Address<span class="required">*</span></label>
+              <input type="text" id="address" name="address" required placeholder="123 Mountain Crest Rd">
+              <span class="error-message hidden" id="addressErr">Address is required.</span>
+            </div>
+            <div class="form-group col-3">
+              <label for="city">City<span class="required">*</span></label>
+              <input type="text" id="city" name="city" required placeholder="Tucson">
+              <span class="error-message hidden" id="cityErr">City is required.</span>
+            </div>
+            <div class="form-group col-1">
+              <label for="state">State<span class="required">*</span></label>
+              <input type="text" id="state" name="state" required placeholder="AZ" maxlength="2">
+              <span class="error-message hidden" id="stateErr">Required.</span>
+            </div>
+            <div class="form-group col-2">
+              <label for="zipCode">ZIP Code<span class="required">*</span></label>
+              <input type="text" id="zipCode" name="zipCode" required placeholder="85701" maxlength="5">
+              <span class="error-message hidden" id="zipCodeErr">Required.</span>
+            </div>
+
+            <!-- Age verification -->
+            <div class="form-group col-6">
+              <label>Age Eligibility Verification (As of June 1, 2026)<span class="required">*</span></label>
+              <div class="options-list">
+                <label class="radio-item">
+                  <input type="radio" name="ageGroup" value="14" required>
+                  <span>I am 14 years old. <em>(Counselor-in-Training)</em></span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="ageGroup" value="16">
+                  <span>I am 16 years of age or older. <em>(Junior Staff)</em></span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="ageGroup" value="18">
+                  <span>I am 18 years of age or older. <em>(Area Director / Adult)</em></span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="ageGroup" value="21">
+                  <span>I am 21 years of age or older. <em>(Camp Management)</em></span>
+                </label>
+              </div>
+              <span class="error-message hidden" id="ageGroupErr">Please select your age eligibility group.</span>
+            </div>
+
+            <!-- Work Auth -->
+            <div class="form-group col-6">
+              <label>Work Authorization<span class="required">*</span></label>
+              <div class="options-list" style="margin-bottom: 0.5rem;">
+                <label class="radio-item">
+                  <input type="radio" name="workAuth" value="Yes" required>
+                  <span>Yes, I am legally authorized to work in the US.</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="workAuth" value="No">
+                  <span>No, I am not authorized.</span>
+                </label>
+              </div>
+              <span class="error-message hidden" id="workAuthErr">Please select your work authorization status.</span>
+              <p class="restriction-desc" style="font-size: 0.7rem; margin-top: 0.2rem;">Proof of eligibility will be required upon hire (Form I-9).</p>
+            </div>
+
+            <!-- Parent Guardian Info (Triggered if under 18) -->
+            <div id="guardianSection" class="col-12 form-grid hidden" style="background: rgba(255, 159, 67, 0.02); border: 1px dashed rgba(255, 159, 67, 0.15); padding: 1rem; border-radius: var(--border-radius-md); margin-top: 0.5rem;">
+              <span class="form-subtitle-small" style="margin-top: 0; border-bottom: none; font-size: 0.85rem;">Required Parent/Guardian Information (Applicant is under 18)</span>
+              <div class="form-group col-4">
+                <label for="guardianName">Parent/Guardian Name<span class="required">*</span></label>
+                <input type="text" id="guardianName" name="guardianName" placeholder="Mary Doe">
+                <span class="error-message hidden" id="guardianNameErr">Guardian name is required for minors.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="guardianPhone">Parent/Guardian Phone<span class="required">*</span></label>
+                <input type="tel" id="guardianPhone" name="guardianPhone" placeholder="(520) 555-0155">
+                <span class="error-message hidden" id="guardianPhoneErr">Guardian phone is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="guardianEmail">Parent/Guardian Email<span class="required">*</span></label>
+                <input type="email" id="guardianEmail" name="guardianEmail" placeholder="mary.doe@example.com">
+                <span class="error-message hidden" id="guardianEmailErr">Please enter a valid email address.</span>
+              </div>
+            </div>
+
+            <!-- Scouting Registration -->
+            <div class="form-group col-12">
+              <label>Scouting America Registration Status<span class="required">*</span></label>
+              <div class="options-list">
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="scoutingStatus" value="Registered" required>
+                  <span>I am currently a registered member of Scouting America.</span>
+                </label>
+                
+                <div id="scoutingDetails" class="form-grid hidden" style="padding-left: 1.5rem; margin-top: 0.25rem; margin-bottom: 0.5rem; grid-column: span 12;">
+                  <div class="form-group col-6">
+                    <label for="scoutCouncil">BSA Council Name<span class="required">*</span></label>
+                    <input type="text" id="scoutCouncil" name="scoutCouncil" placeholder="Catalina Council">
+                    <span class="error-message hidden" id="scoutCouncilErr">Council name is required.</span>
+                  </div>
+                  <div class="form-group col-6">
+                    <label for="scoutUnit">Troop/Crew/Ship Number<span class="required">*</span></label>
+                    <input type="text" id="scoutUnit" name="scoutUnit" placeholder="Troop 192">
+                    <span class="error-message hidden" id="scoutUnitErr">Unit number is required.</span>
+                  </div>
+                </div>
+
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="scoutingStatus" value="NotRegistered">
+                  <span>I am not currently registered, but I agree to register with Scouting America if hired.</span>
+                </label>
+              </div>
+              <span class="error-message hidden" id="scoutingStatusErr">Please select your Scouting membership status.</span>
+              <p class="restriction-desc" style="font-size: 0.7rem; margin-top: 0.3rem; margin-left: 0.2rem;">All camp staff members must be registered members of Scouting America and complete Youth Protection Training (YPT) before starting work.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Position Preferences and Camp Operations (Section II) -->
+        <div class="form-step" id="step2">
+          <h2 class="form-section-title">Step 2: Preferences & Skills</h2>
+          <p class="form-section-subtitle">SECTION II: Position Preferences & Camp Operations</p>
+          
+          <div class="form-grid">
+            <!-- Availability Dates -->
+            <div class="form-group col-4">
+              <label for="startDate">Available Start Date<span class="required">*</span></label>
+              <input type="date" id="startDate" name="startDate" required>
+              <span class="error-message hidden" id="startDateErr">Start date is required.</span>
+            </div>
+            <div class="form-group col-4">
+              <label for="endDate">Available End Date<span class="required">*</span></label>
+              <input type="date" id="endDate" name="endDate" required>
+              <span class="error-message hidden" id="endDateErr">End date is required.</span>
+            </div>
+            <div class="form-group col-4" style="display: flex; align-items: center; padding-top: 1rem;">
+              <p class="restriction-desc" style="font-size: 0.75rem;">Mandatory staff training begins early June. Core camp operates through July.</p>
+            </div>
+            <div class="form-group col-12">
+              <label for="conflicts">Scheduling Conflicts / Limitations</label>
+              <textarea id="conflicts" name="conflicts" rows="2" placeholder="List any family vacations, school orientations, or conflicts. Leave blank if none."></textarea>
+            </div>
+
+            <!-- Position Preferences (1-3 ranking) -->
+            <span class="form-subtitle-small">Rank Your Top 3 Position Choices (1 = Most Preferred)</span>
+            <div class="col-12 preference-grid">
+              <div class="preference-row">
+                <span class="preference-label">Camp Management <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Director, Commissioner - Min age 21)</span></span>
+                <div class="form-group" style="gap: 0;">
+                  <select name="pref_management" class="pref-select">
+                    <option value="none">Not Ranked</option>
+                    <option value="1">1st Choice</option>
+                    <option value="2">2nd Choice</option>
+                    <option value="3">3rd Choice</option>
+                  </select>
+                </div>
+              </div>
+              <div class="preference-row">
+                <span class="preference-label">Area Director <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Aquatics, Nature, STEM, Outdoor Skills - Min age 18)</span></span>
+                <div class="form-group" style="gap: 0;">
+                  <select name="pref_director" class="pref-select">
+                    <option value="none">Not Ranked</option>
+                    <option value="1">1st Choice</option>
+                    <option value="2">2nd Choice</option>
+                    <option value="3">3rd Choice</option>
+                  </select>
+                </div>
+              </div>
+              <div class="preference-row">
+                <span class="preference-label">Area Instructor <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Instructing merit badges, activities - Min age 16)</span></span>
+                <div class="form-group" style="gap: 0;">
+                  <select name="pref_instructor" class="pref-select">
+                    <option value="none">Not Ranked</option>
+                    <option value="1">1st Choice</option>
+                    <option value="2">2nd Choice</option>
+                    <option value="3">3rd Choice</option>
+                  </select>
+                </div>
+              </div>
+              <div class="preference-row">
+                <span class="preference-label">Support Staff <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Kitchen, Trading Post, Quartermaster - Min age 16)</span></span>
+                <div class="form-group" style="gap: 0;">
+                  <select name="pref_support" class="pref-select">
+                    <option value="none">Not Ranked</option>
+                    <option value="1">1st Choice</option>
+                    <option value="2">2nd Choice</option>
+                    <option value="3">3rd Choice</option>
+                  </select>
+                </div>
+              </div>
+              <div class="preference-row">
+                <span class="preference-label">Counselor-in-Training (CIT) <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Unpaid leadership experience - Min age 14)</span></span>
+                <div class="form-group" style="gap: 0;">
+                  <select name="pref_cit" class="pref-select">
+                    <option value="none">Not Ranked</option>
+                    <option value="1">1st Choice</option>
+                    <option value="2">2nd Choice</option>
+                    <option value="3">3rd Choice</option>
+                  </select>
+                </div>
+              </div>
+              <span class="error-message hidden" id="preferencesErr">Please rank exactly 3 unique preferences (1st, 2nd, and 3rd choices).</span>
+            </div>
+
+            <!-- Programmatic Expertise -->
+            <span class="form-subtitle-small">Programmatic Expertise (Check all areas you are qualified to instruct)</span>
+            <div class="form-group col-12">
+              <div class="form-grid" style="gap: 0.75rem;">
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Range and Target Activities">
+                  <span><strong>Range & Target Activities</strong> (Archery, Rifle, Shotgun)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="STEM">
+                  <span><strong>STEM</strong> (Game Design, Robotics, Programming)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Model Camp">
+                  <span><strong>Model Camp</strong> (Tenderfoot to First Class advancement)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Eagle Quest">
+                  <span><strong>Eagle Quest</strong> (Citizenship badges, Communications)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Handicraft">
+                  <span><strong>Handicraft</strong> (Woodcarving, Leatherwork, Art)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Outdoor Skills">
+                  <span><strong>Outdoor Skills</strong> (Wilderness Survival, Pioneering)</span>
+                </label>
+                <label class="checkbox-item col-6">
+                  <input type="checkbox" name="expertise" value="Nature">
+                  <span><strong>Nature / Ecology</strong> (Environmental Science, Forestry)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group col-12">
+              <label for="expertiseDesc">Describe the experience you claim above:</label>
+              <textarea id="expertiseDesc" name="expertiseDesc" rows="3" placeholder="Provide details on your hobbies, training, merit badges earned, or teachings in these subjects..."></textarea>
+            </div>
+
+            <!-- Certifications & Uniform Sizing -->
+            <span class="form-subtitle-small">Certifications & Logistics</span>
+            
+            <div class="form-group col-12">
+              <label>Do you hold a current National Camping School (NCS) Certification?</label>
+              <div class="options-list">
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="ncsHolder" value="Yes">
+                  <span>Yes, I hold a current NCS Certification.</span>
+                </label>
+                
+                <div id="ncsDetails" class="form-grid hidden" style="padding-left: 1.5rem; margin-top: 0.25rem; margin-bottom: 0.5rem; grid-column: span 12;">
+                  <div class="form-group col-6">
+                    <label for="ncsSection">NCS Section (e.g. Aquatics, Outdoor Skills)</label>
+                    <input type="text" id="ncsSection" name="ncsSection" placeholder="Outdoor Skills">
+                    <span class="error-message hidden" id="ncsSectionErr">NCS Section is required if certified.</span>
+                  </div>
+                  <div class="form-group col-6">
+                    <label for="ncsExpiration">Expiration Date</label>
+                    <input type="date" id="ncsExpiration" name="ncsExpiration">
+                    <span class="error-message hidden" id="ncsExpirationErr">Expiration date is required.</span>
+                  </div>
+                </div>
+
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="ncsHolder" value="No" checked>
+                  <span>No, I do not have a Camping School certification.</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group col-6">
+              <label for="tshirtSize">T-Shirt Size (For Staff Apparel)<span class="required">*</span></label>
+              <select id="tshirtSize" name="tshirtSize" required>
+                <option value="" disabled selected>Select Size</option>
+                <option value="S">Adult Small</option>
+                <option value="M">Adult Medium</option>
+                <option value="L">Adult Large</option>
+                <option value="XL">Adult XL</option>
+                <option value="XXL">Adult XXL</option>
+                <option value="3XL">Adult 3XL</option>
+              </select>
+              <span class="error-message hidden" id="tshirtSizeErr">T-shirt size is required.</span>
+            </div>
+            <div class="form-group col-6">
+              <label for="jacketSize">Jacket Size (For Staff Uniform)<span class="required">*</span></label>
+              <select id="jacketSize" name="jacketSize" required>
+                <option value="" disabled selected>Select Size</option>
+                <option value="S">Adult Small</option>
+                <option value="M">Adult Medium</option>
+                <option value="L">Adult Large</option>
+                <option value="XL">Adult XL</option>
+                <option value="XXL">Adult XXL</option>
+                <option value="3XL">Adult 3XL</option>
+              </select>
+              <span class="error-message hidden" id="jacketSizeErr">Jacket size is required.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Experience, Education, and References (Section III) -->
+        <div class="form-step" id="step3">
+          <h2 class="form-section-title">Step 3: Background & References</h2>
+          <p class="form-section-subtitle">SECTION III: Experience, Education & Professional References</p>
+          
+          <div class="form-grid">
+            <!-- Scouting Experience -->
+            <span class="form-subtitle-small">Scouting Background (If applicable)</span>
+            <div class="form-group col-4">
+              <label for="scoutRank">Highest Scouting Rank Achieved</label>
+              <input type="text" id="scoutRank" name="scoutRank" placeholder="Eagle Scout / Life / Crew President">
+            </div>
+            <div class="form-group col-5">
+              <label for="scoutLeadership">Leadership Roles Held</label>
+              <input type="text" id="scoutLeadership" name="scoutLeadership" placeholder="Senior Patrol Leader, Patrol Leader">
+            </div>
+            <div class="form-group col-3">
+              <label>Order of the Arrow Member?</label>
+              <div class="options-list" style="flex-direction: row; gap: 1rem;">
+                <label class="radio-item" style="padding: 0.5rem 1rem;">
+                  <input type="radio" name="oaMember" value="Yes">
+                  <span>Yes</span>
+                </label>
+                <label class="radio-item" style="padding: 0.5rem 1rem;">
+                  <input type="radio" name="oaMember" value="No" checked>
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Previous Camp Staff -->
+            <span class="form-subtitle-small">Previous Camp Staff Experience</span>
+            <div class="form-group col-12">
+              <label>Have you previously worked on a camp staff?</label>
+              <div class="options-list">
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="prevStaff" value="Yes">
+                  <span>Yes, I have camp staff experience.</span>
+                </label>
+                
+                <div id="prevStaffDetails" class="form-grid hidden" style="padding-left: 1.5rem; margin-top: 0.25rem; margin-bottom: 0.5rem; grid-column: span 12;">
+                  <div class="form-group col-12">
+                    <label for="prevStaffInfo">List Camp Name(s), Role(s), and Year(s)<span class="required">*</span></label>
+                    <textarea id="prevStaffInfo" name="prevStaffInfo" rows="2" placeholder="e.g. Camp Lawton, STEM Instructor, 2024-2025"></textarea>
+                    <span class="error-message hidden" id="prevStaffInfoErr">Please list your previous staff details.</span>
+                  </div>
+                </div>
+
+                <label class="radio-item" style="align-items: center;">
+                  <input type="radio" name="prevStaff" value="No" checked>
+                  <span>No, this is my first time applying for camp staff.</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- General Employment -->
+            <span class="form-subtitle-small">General Employment History <span style="font-weight: normal; font-size: 0.75rem; color: var(--stone-400);">(Provide most recent, or skip if providing a resume during interview)</span></span>
+            <div class="form-group col-4">
+              <label for="recentEmployer">Most Recent Employer</label>
+              <input type="text" id="recentEmployer" name="recentEmployer" placeholder="Acme Grocery Store">
+            </div>
+            <div class="form-group col-4">
+              <label for="employmentDates">Dates of Employment</label>
+              <input type="text" id="employmentDates" name="employmentDates" placeholder="June 2025 - May 2026">
+            </div>
+            <div class="form-group col-4">
+              <label for="employmentDuties">Primary Duties</label>
+              <input type="text" id="employmentDuties" name="employmentDuties" placeholder="Cashier, customer service">
+            </div>
+
+            <!-- Education & Extracurriculars -->
+            <span class="form-subtitle-small">Education & Extracurriculars</span>
+            <div class="form-group col-6">
+              <label class="checkbox-item" style="margin-top: 1.25rem;">
+                <input type="checkbox" id="eduHighschool" name="eduHighschool">
+                <span>High School Diploma or GED</span>
+              </label>
+              <div id="hsDetails" class="form-group hidden" style="margin-top: 0.5rem;">
+                <label for="hsYear">Year Graduated/Graduating<span class="required">*</span></label>
+                <input type="number" id="hsYear" name="hsYear" placeholder="2025" min="1950" max="2035">
+                <span class="error-message hidden" id="hsYearErr">Required.</span>
+              </div>
+            </div>
+            <div class="form-group col-6">
+              <label class="checkbox-item" style="margin-top: 1.25rem;">
+                <input type="checkbox" id="eduCollege" name="eduCollege">
+                <span>College Degree Earned/In Progress</span>
+              </label>
+              <div id="collegeDetails" class="form-grid hidden" style="margin-top: 0.5rem;">
+                <div class="form-group col-7">
+                  <label for="collegeType">Degree Type / Major<span class="required">*</span></label>
+                  <input type="text" id="collegeType" name="collegeType" placeholder="B.S. in Biology">
+                  <span class="error-message hidden" id="collegeTypeErr">Required.</span>
+                </div>
+                <div class="form-group col-5">
+                  <label for="collegeYear">Graduation Year<span class="required">*</span></label>
+                  <input type="number" id="collegeYear" name="collegeYear" placeholder="2027" min="1950" max="2035">
+                  <span class="error-message hidden" id="collegeYearErr">Required.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group col-6">
+              <label for="currentSchool">Most Recent / Current School</label>
+              <input type="text" id="currentSchool" name="currentSchool" placeholder="University of Arizona">
+            </div>
+            <div class="form-group col-6">
+              <label for="extracurriculars">Clubs, Sports, or Services relevant to camp life</label>
+              <input type="text" id="extracurriculars" name="extracurriculars" placeholder="Swimming team, band, scouting crew">
+            </div>
+
+            <!-- Professional References -->
+            <span class="form-subtitle-small">Professional References (Provide three non-family references)</span>
+            
+            <!-- Reference 1 -->
+            <div class="col-12 form-grid" style="background: rgba(255, 255, 255, 0.005); border: 1px solid rgba(255, 255, 255, 0.03); padding: 0.85rem; border-radius: var(--border-radius-md); gap: 0.75rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--forest-200); grid-column: span 12;">1. First Reference<span class="required">*</span></span>
+              <div class="form-group col-4">
+                <label for="ref1Name">Name<span class="required">*</span></label>
+                <input type="text" id="ref1Name" name="ref1Name" placeholder="Dr. Sarah Johnson">
+                <span class="error-message hidden" id="ref1NameErr">Name is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref1Relation">Relationship<span class="required">*</span></label>
+                <input type="text" id="ref1Relation" name="ref1Relation" placeholder="High School Biology Teacher">
+                <span class="error-message hidden" id="ref1RelationErr">Relationship is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref1Contact">Phone / Email Contact<span class="required">*</span></label>
+                <input type="text" id="ref1Contact" name="ref1Contact" placeholder="(520) 555-0188 or sarah@edu.com">
+                <span class="error-message hidden" id="ref1ContactErr">Contact is required.</span>
+              </div>
+            </div>
+
+            <!-- Reference 2 -->
+            <div class="col-12 form-grid" style="background: rgba(255, 255, 255, 0.005); border: 1px solid rgba(255, 255, 255, 0.03); padding: 0.85rem; border-radius: var(--border-radius-md); gap: 0.75rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--forest-200); grid-column: span 12;">2. Second Reference<span class="required">*</span></span>
+              <div class="form-group col-4">
+                <label for="ref2Name">Name<span class="required">*</span></label>
+                <input type="text" id="ref2Name" name="ref2Name" placeholder="Scoutmaster Bob Smith">
+                <span class="error-message hidden" id="ref2NameErr">Name is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref2Relation">Relationship<span class="required">*</span></label>
+                <input type="text" id="ref2Relation" name="ref2Relation" placeholder="Scoutmaster (Troop 45)">
+                <span class="error-message hidden" id="ref2RelationErr">Relationship is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref2Contact">Phone / Email Contact<span class="required">*</span></label>
+                <input type="text" id="ref2Contact" name="ref2Contact" placeholder="bob.smith@scout.org">
+                <span class="error-message hidden" id="ref2ContactErr">Contact is required.</span>
+              </div>
+            </div>
+
+            <!-- Reference 3 -->
+            <div class="col-12 form-grid" style="background: rgba(255, 255, 255, 0.005); border: 1px solid rgba(255, 255, 255, 0.03); padding: 0.85rem; border-radius: var(--border-radius-md); gap: 0.75rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--forest-200); grid-column: span 12;">3. Third Reference<span class="required">*</span></span>
+              <div class="form-group col-4">
+                <label for="ref3Name">Name<span class="required">*</span></label>
+                <input type="text" id="ref3Name" name="ref3Name" placeholder="Jane Miller">
+                <span class="error-message hidden" id="ref3NameErr">Name is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref3Relation">Relationship<span class="required">*</span></label>
+                <input type="text" id="ref3Relation" name="ref3Relation" placeholder="Former Employer (Manager)">
+                <span class="error-message hidden" id="ref3RelationErr">Relationship is required.</span>
+              </div>
+              <div class="form-group col-4">
+                <label for="ref3Contact">Phone / Email Contact<span class="required">*</span></label>
+                <input type="text" id="ref3Contact" name="ref3Contact" placeholder="(520) 555-0122">
+                <span class="error-message hidden" id="ref3ContactErr">Contact is required.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: Essential Functions, Medical, and Environmental Acknowledgments (Section IV) -->
+        <div class="form-step" id="step4">
+          <h2 class="form-section-title">Step 4: Realities & Certs</h2>
+          <p class="form-section-subtitle">SECTION IV: Essential Functions, Environmental realities, & Life-Safety Certifications</p>
+          
+          <div class="form-grid">
+            <div class="col-12" style="background: rgba(255, 82, 82, 0.02); border: 1px solid rgba(255, 82, 82, 0.1); padding: 0.85rem; border-radius: var(--border-radius-md); margin-bottom: 0.5rem;">
+              <p class="restriction-desc" style="color: var(--fire-500); font-weight: 500; font-size: 0.8rem;">
+                Camp Lawton is located on Mount Lemmon at an elevation of 8,000 feet. The environment is rugged, resources are heavily conserved, and wildlife is active. Please initial in each box to acknowledge these realities.
+              </p>
+            </div>
+
+            <!-- Initials list -->
+            <div class="col-12 acknowledgments-list">
+              <!-- Item 1 -->
+              <div class="ack-row">
+                <div class="ack-initials-wrapper">
+                  <input type="text" class="ack-initials-input form-group input" id="initAltitude" name="initAltitude" required maxlength="3" placeholder="Init">
+                  <span class="error-message hidden" id="initAltitudeErr">Req.</span>
+                </div>
+                <div class="ack-text">
+                  <strong>High-Altitude & Terrain:</strong> I understand that working at Camp Lawton requires physical exertion at 8,000 feet of elevation and navigation of uneven and rugged terrain. Reasonable accommodations will be made to aid you as needed, but the reality of the camp environment is unavoidable.
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="ack-row">
+                <div class="ack-initials-wrapper">
+                  <input type="text" class="ack-initials-input form-group input" id="initWildlife" name="initWildlife" required maxlength="3" placeholder="Init">
+                  <span class="error-message hidden" id="initWildlifeErr">Req.</span>
+                </div>
+                <div class="ack-text">
+                  <strong>Wildlife & "Smellables" Policy:</strong> I understand that wildlife such as black bears, rattlesnakes, turkeys, mountain lions, and other critters are a possibility in the camp. I agree to strictly adhere to the camp's wildlife protocols.
+                </div>
+              </div>
+
+              <!-- Item 3 -->
+              <div class="ack-row">
+                <div class="ack-initials-wrapper">
+                  <input type="text" class="ack-initials-input form-group input" id="initWater" name="initWater" required maxlength="3" placeholder="Init">
+                  <span class="error-message hidden" id="initWaterErr">Req.</span>
+                </div>
+                <div class="ack-text">
+                  <strong>Water Conservation & Sanitation:</strong> I acknowledge that water is a scarce resource at camp. I agree to abide by shower time limits (3-5 minutes unless otherwise informed). I understand that my duties will include the daily cleaning and sanitation of shared facilities, including latrines (KYBOs) and shower houses.
+                </div>
+              </div>
+
+              <!-- Item 4 -->
+              <div class="ack-row">
+                <div class="ack-initials-wrapper">
+                  <input type="text" class="ack-initials-input form-group input" id="initMedical" name="initMedical" required maxlength="3" placeholder="Init">
+                  <span class="error-message hidden" id="initMedicalErr">Req.</span>
+                </div>
+                <div class="ack-text">
+                  <strong>Medical Clearances:</strong> I understand that, if hired, I must provide a current BSA Annual Health and Medical Record (Parts A, B, and C). Part C requires a physical examination by a certified healthcare provider prior to my arrival at camp.
+                </div>
+              </div>
+            </div>
+
+            <!-- Life Safety Certifications -->
+            <span class="form-subtitle-small">Current Life-Safety Certifications (Check all that apply)</span>
+            
+            <!-- CPR Cert -->
+            <div class="form-group col-12">
+              <div class="form-grid" style="gap: 0.75rem; align-items: center;">
+                <label class="checkbox-item col-5" style="margin-bottom: 0;">
+                  <input type="checkbox" id="certCpr" name="certCpr">
+                  <span><strong>CPR / AED Certification</strong></span>
+                </label>
+                <div id="cprDetails" class="form-group col-7 hidden" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                  <label for="certCprExp" style="white-space: nowrap;">Expiration Date:<span class="required">*</span></label>
+                  <input type="date" id="certCprExp" name="certCprExp">
+                  <span class="error-message hidden" id="certCprExpErr">Required.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- WFA Cert -->
+            <div class="form-group col-12">
+              <div class="form-grid" style="gap: 0.75rem; align-items: center;">
+                <label class="checkbox-item col-5" style="margin-bottom: 0;">
+                  <input type="checkbox" id="certWfa" name="certWfa">
+                  <span><strong>Wilderness First Aid (WFA)</strong></span>
+                </label>
+                <div id="wfaDetails" class="form-group col-7 hidden" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                  <label for="certWfaExp" style="white-space: nowrap;">Expiration Date:<span class="required">*</span></label>
+                  <input type="date" id="certWfaExp" name="certWfaExp">
+                  <span class="error-message hidden" id="certWfaExpErr">Required.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other Cert -->
+            <div class="form-group col-12">
+              <div class="form-grid" style="gap: 0.75rem; align-items: center;">
+                <label class="checkbox-item col-5" style="margin-bottom: 0;">
+                  <input type="checkbox" id="certOther" name="certOther">
+                  <span><strong>Other Certification</strong></span>
+                </label>
+                <div id="otherDetails" class="form-group col-7 hidden" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                  <label for="certOtherDesc" style="white-space: nowrap;">Details & Exp:<span class="required">*</span></label>
+                  <input type="text" id="certOtherDesc" name="certOtherDesc" placeholder="Lifeguard, First Aid - Exp 2027">
+                  <span class="error-message hidden" id="certOtherDescErr">Required.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- STEP 5: Review & Legal Agreements (Section V) -->
+        <div class="form-step" id="step5">
+          <h2 class="form-section-title">Step 5: Review & Submit</h2>
+          <p class="form-section-subtitle">SECTION V: Legal Agreements & Final Signatures</p>
+          
+          <div class="form-grid">
+            
+            <!-- DYNAMIC SUMMARY SECTION -->
+            <div class="col-12 review-summary-card">
+              <span class="form-subtitle-small" style="margin-top: 0;">Application Summary Preview</span>
+              
+              <!-- Profile summary -->
+              <div class="review-group">
+                <div class="review-group-title">Applicant Profile</div>
+                <div class="review-data-list">
+                  <div class="review-item">
+                    <span class="review-label">Name</span>
+                    <span class="review-value" id="revName">--</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Email & Phone</span>
+                    <span class="review-value" id="revContact">--</span>
+                  </div>
+                  <div class="review-item" style="grid-column: span 2;">
+                    <span class="review-label">Address</span>
+                    <span class="review-value" id="revAddress">--</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Age Category & Work Auth</span>
+                    <span class="review-value" id="revAgeAuth">--</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Scouting Status</span>
+                    <span class="review-value" id="revScouting">--</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preferences Summary -->
+              <div class="review-group">
+                <div class="review-group-title">Preferences & Availability</div>
+                <div class="review-data-list">
+                  <div class="review-item" style="grid-column: span 2;">
+                    <span class="review-label">Camp Preferences (Ranked)</span>
+                    <span class="review-value" id="revPreferences">--</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Availability Dates</span>
+                    <span class="review-value" id="revDates">--</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Program Expertise</span>
+                    <span class="review-value" id="revExpertise">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LEGAL DISCLOSURES AND AGREEMENTS -->
+            <span class="form-subtitle-small">Legal Disclosures & Agreements</span>
+            
+            <div class="col-12" style="display: flex; flex-direction: column; gap: 0.85rem; max-height: 250px; overflow-y: auto; background: rgba(0, 0, 0, 0.15); padding: 0.85rem; border-radius: var(--border-radius-md); border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.75rem; line-height: 1.4; color: var(--stone-400);">
+              <p>
+                <strong>BSA Code of Conduct:</strong> I agree to conduct myself in accordance with the Scout Oath and Scout Law. I understand and will strictly adhere to all Scouting America Safeguarding Youth policies, including the absolute prohibition of one-on-one contact between adults and youth members.
+              </p>
+              <p>
+                <strong>Substance Abuse Policy:</strong> Camp Lawton enforces a strict, zero-tolerance policy regarding the possession or use of alcohol, illegal drugs, and unauthorized prescription medications on camp property. Tobacco/vape use is heavily restricted to designated areas and entirely prohibited for staff under the legal age.
+              </p>
+              <p>
+                <strong>At-Will Employment:</strong> I understand that if I am employed by the Catalina Council, my employment is "at-will." This means that either the Council or I may terminate the employment relationship at any time, with or without cause, and with or without notice.
+              </p>
+              <p>
+                <strong>Signature & Verification:</strong> By signing below, I certify that all information provided in this application is true, correct, and complete to the best of my knowledge. I understand that any misrepresentation, falsification, or omission of information may result in the rejection of my application or immediate termination of employment if discovered after hire.
+              </p>
+            </div>
+
+            <!-- Consent Checkbox -->
+            <div class="form-group col-12">
+              <label class="checkbox-item" style="border-color: rgba(255, 159, 67, 0.1); background: rgba(255, 159, 67, 0.01);">
+                <input type="checkbox" id="legalConsent" name="legalConsent" required>
+                <span><strong>I read and agree to all the legal disclosures, Scouting America Code of Conduct, and At-Will policies stated above.</strong><span class="required">*</span></span>
+              </label>
+              <span class="error-message hidden" id="legalConsentErr">You must accept the legal agreements to submit.</span>
+            </div>
+
+            <!-- Applicant Signature and Typed Name -->
+            <div class="form-group col-6">
+              <label for="typedSignature">Typed Applicant Full Name (Legal Signature)<span class="required">*</span></label>
+              <input type="text" id="typedSignature" name="typedSignature" required placeholder="John E. Doe">
+              <span class="error-message hidden" id="typedSignatureErr">Please type your name to sign legally.</span>
+            </div>
+            
+            <div class="form-group col-6">
+              <label for="signatureDate">Date of Signature<span class="required">*</span></label>
+              <input type="date" id="signatureDate" name="signatureDate" required>
+              <span class="error-message hidden" id="signatureDateErr">Required.</span>
+            </div>
+
+            <!-- Draw Signature Pad (Wow Factor) -->
+            <div class="form-group col-12 signature-section">
+              <label>Applicant Hand-Drawn Signature (Touchscreen or Mouse)<span class="required">*</span></label>
+              <div class="signature-pad-container">
+                <canvas class="signature-pad-canvas" id="sigPad"></canvas>
+                <button type="button" class="signature-clear-btn" id="sigClearBtn">Clear Pad</button>
+              </div>
+              <span class="error-message hidden" id="sigPadErr">Please draw your signature in the box.</span>
+            </div>
+
+            <!-- Parent Guardian Legal Signature (Only active if under 18) -->
+            <div id="guardianSignatureSection" class="col-12 form-grid hidden" style="background: rgba(255, 159, 67, 0.02); border: 1px dashed rgba(255, 159, 67, 0.15); padding: 1rem; border-radius: var(--border-radius-md); margin-top: 0.5rem;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--ember-500); grid-column: span 12;">Minor Applicant Consent: Parent/Guardian Legal Signature</span>
+              <div class="form-group col-6">
+                <label for="guardianTypedSignature">Parent/Guardian Typed Legal Name<span class="required">*</span></label>
+                <input type="text" id="guardianTypedSignature" name="guardianTypedSignature" placeholder="Mary A. Doe">
+                <span class="error-message hidden" id="guardianTypedSignatureErr">Parent/Guardian signature is required.</span>
+              </div>
+              <div class="form-group col-6">
+                <label for="guardianSignatureDate">Date of Signature<span class="required">*</span></label>
+                <input type="date" id="guardianSignatureDate" name="guardianSignatureDate">
+                <span class="error-message hidden" id="guardianSignatureDateErr">Required.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Screen (Replaces form content upon submission) -->
+        <div class="success-screen hidden" id="successScreen">
+          <div class="success-badge-icon">✓</div>
+          <h2 class="success-title">Application Submitted!</h2>
+          <p class="success-desc">
+            Thank you for applying to join the 2026 Camp Lawton Staff team. Your application has been logged successfully in our system and synced to the Catalina Council database.
+          </p>
+          
+          <div class="success-details">
+            <div class="success-row">
+              <span>Application ID:</span>
+              <span id="resAppId">--</span>
+            </div>
+            <div class="success-row">
+              <span>Applicant Name:</span>
+              <span id="resAppName">--</span>
+            </div>
+            <div class="success-row">
+              <span>Preferences Ranked:</span>
+              <span id="resAppPrefs">--</span>
+            </div>
+            <div class="success-row">
+              <span>Date Submitted:</span>
+              <span id="resAppDate">--</span>
+            </div>
+            <div class="success-row">
+              <span>Status:</span>
+              <span style="background: var(--forest-800); color: var(--forest-200); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Submitted</span>
+            </div>
+          </div>
+          
+          <p class="restriction-desc" style="max-width: 500px; margin: 0 auto 1.5rem; font-size: 0.8rem; line-height: 1.4;">
+            A camp director will review your qualifications, references, and scheduling dates. We will reach out via email or phone to schedule an interview. If you have any immediate questions, please contact the Catalina Council Office.
+          </p>
+          
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="/" class="btn btn-primary">🎛️ Return to Portal</a>
+            <button type="button" class="btn btn-secondary" id="btnApplyAgain">Apply Another Candidate</button>
+          </div>
+        </div>
+
+        <!-- Stepper Navigation Footer buttons -->
+        <div class="wizard-footer" id="wizardFooter">
+          <button type="button" class="btn btn-secondary" id="btnBack" disabled>
+            ◀ Back
+          </button>
+          <button type="button" class="btn btn-primary" id="btnNext">
+            Next Step ▶
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <p>© 2026 Catalina Council - Scouting America. Camp Lawton Scout Camp, Mt. Lemmon, AZ.</p>
+      <p class="footer-fineprint">Your privacy is important. Staff application details are stored securely on our database. All data transfers are encrypted.</p>
+    </footer>
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script src="apply.js"></script>
+</body>
+</html>

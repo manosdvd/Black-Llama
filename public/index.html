@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camp Lawton Scout Camp - Live Weather & Fire Safety Portal</title>
+  <meta name="description" content="Official real-time weather and fire safety dashboard for Camp Lawton Scout Camp, Catalina Council, Scouting America. Located at 7,000 ft on Mt. Lemmon, Coronado National Forest.">
+  <link rel="icon" type="image/png" href="cl-logo-1x1.png">
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- Particle Canvas for Campfire Embers -->
+  <canvas id="emberCanvas"></canvas>
+
+  <!-- High-priority Red Flag Alert Banner -->
+  <div id="redFlagBanner" class="red-flag-banner hidden" role="alert" aria-live="assertive">
+    <div class="banner-content">
+      <svg class="alert-icon" viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <span class="banner-text"><strong>RED FLAG WARNING ACTIVE:</strong> Coronado National Forest is under critical fire conditions. Absolutely no open fires or campfires permitted.</span>
+    </div>
+    <button class="banner-close" onclick="document.getElementById('redFlagBanner').classList.add('hidden')" aria-label="Close alert">✕</button>
+  </div>
+
+  <div class="app-container">
+    <!-- Camp Lawton Panoramic Banner Image -->
+    <div class="camp-banner-container glass-panel">
+      <img src="banner.jpg" alt="Camp Lawton Panoramic Banner" class="camp-banner-img">
+    </div>
+
+    <!-- Header Area -->
+    <header class="main-header">
+      <div class="branding">
+        <!-- Scouting America / Camp Lawton stylized emblem -->
+        <div class="logo-container" id="logoBtn" title="Double click to open admin portal">
+          <img src="cl-logo.png" alt="Camp Lawton Logo" class="camp-logo" width="150" height="100">
+        </div>
+        <div class="branding-text">
+          <span class="council-tag">Catalina Council — Scouting America</span>
+          <h1>CAMP LAWTON</h1>
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.45rem; margin-block-start: 0.25rem;">
+            <span class="location-tag" style="margin-block-start: 0;">Mt. Lemmon, AZ • Elev. 7,779 Ft • <a href="https://maps.google.com/?q=32.4033,-110.7215" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;" title="View Camp Lawton on Google Maps">32.4033° N, 110.7215° W</a></span>
+            <span class="location-tag" style="margin-block-start: 0; color: var(--ember-500); font-weight: 600; background: rgba(255, 159, 67, 0.08); padding: 0.1rem 0.5rem; border-radius: 4px; border: 1px solid rgba(255, 159, 67, 0.15); display: inline-block; min-width: 310px; text-align: center; font-variant-numeric: tabular-nums;" id="campTime">Camp Time: Loading...</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Live Camp Status Announcement -->
+      <div class="camp-status-card glass-panel">
+        <div class="status-indicator active">
+          <span class="status-dot"></span>
+          <span class="status-label">Camp Lawton Status</span>
+        </div>
+        <p class="status-message" id="campStatusMsg">Welcome to Camp Lawton! The camp is currently open for the summer season. Check fire safety guidelines before ignition.</p>
+        <button class="admin-trigger-btn" id="adminTriggerBtn" aria-label="Camp Director Settings">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+          Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard: Left Sidebar + Right Main Content -->
+    <main class="dashboard-layout">
+      
+      <!-- LEFT COLUMN: SIDEBAR WIDGETS -->
+      <aside class="sidebar-column flex-col" aria-label="Camp Status & Resources">
+        
+        <!-- Fire Safety Card -->
+        <div class="glass-panel safety-card highlight-border flex-grow">
+          <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center;">
+            <div class="title-with-icon">
+              <svg class="header-icon flame-icon" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M12 2S9.15 5.5 9.15 8.5c0 1.9 1.13 3.49 2.85 4.15 1.72-.66 2.85-2.25 2.85-4.15C14.85 5.5 12 2 12 2zm0 13c-3.87 0-7 3.13-7 7h14c0-3.87-3.13-7-7-7z"/>
+              </svg>
+              <h2>Fire Safety Center</h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="btnRefreshFire" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.2rem;" title="Force refresh fire restrictions and NOAA weather alerts">
+                🔄 Refresh
+              </button>
+              <span class="badge badge-pulse" id="fireDangerBadge" style="margin: 0;">Checking...</span>
+            </div>
+          </div>
+
+          <!-- Fire Danger Level Gauge -->
+          <div class="gauge-container">
+            <div class="gauge">
+              <!-- Background Arc -->
+              <svg class="gauge-arc" viewBox="0 0 200 100" width="100%" height="100%">
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4caf50" />
+                    <stop offset="25%" stop-color="#ffeb3b" />
+                    <stop offset="50%" stop-color="#ff9800" />
+                    <stop offset="75%" stop-color="#ff5722" />
+                    <stop offset="100%" stop-color="#f44336" />
+                  </linearGradient>
+                </defs>
+                <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="14" stroke-linecap="round" />
+                <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round" />
+              </svg>
+              
+              <!-- Center Needle -->
+              <div class="gauge-needle-wrapper" id="gaugeNeedle">
+                <div class="gauge-needle"></div>
+              </div>
+
+              <!-- Gauge Info Display -->
+              <div class="gauge-info">
+                <span class="gauge-value" id="gaugeDangerText">VERY HIGH</span>
+                <span class="gauge-label">Coronado NF Rating</span>
+              </div>
+            </div>
+            
+            <!-- Dial Scale Labels -->
+            <div class="gauge-labels">
+              <span class="label-low">Low</span>
+              <span class="label-mod">Mod</span>
+              <span class="label-high">High</span>
+              <span class="label-veryhigh">V. High</span>
+              <span class="label-extreme">Extreme</span>
+            </div>
+          </div>
+
+          <!-- Campfire Restrictions Directive Box -->
+          <div class="restriction-box" id="campfireRestrictionCard">
+            <div class="restriction-header">
+              <span class="restriction-icon">🔥</span>
+              <div>
+                <h3>Campfire Restrictions</h3>
+                <span class="restriction-status-tag" id="restrictionStatusText">Restricted</span>
+              </div>
+            </div>
+            <p class="restriction-desc" id="restrictionDescText">
+              Wood and charcoal fires are restricted to designated steel rings in developed campgrounds. Propane stoves/heaters with shutoff valves are permitted.
+            </p>
+          </div>
+
+          <!-- Forest Fire Message -->
+          <div class="alert-info-box" id="customFireAlertBox">
+            <p id="customFireAlertText">Loading restrictions...</p>
+          </div>
+
+          <!-- Fire Status Footer Links & Time -->
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; flex-wrap: wrap; gap: 0.5rem;">
+            <span style="color: var(--stone-500);" id="fireLastUpdated">Loading updates...</span>
+            <div style="display: flex; gap: 0.6rem;">
+              <a href="https://www.fs.usda.gov/alerts/coronado/alerts-notices" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;" title="US Forest Service Coronado National Forest Alerts">USFS Alerts</a>
+              <a href="https://api.weather.gov/alerts/active?point=32.4033,-110.7215" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;" title="NOAA/NWS Active Alerts API">NOAA Alerts</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Forest Alerts & Advisories Card -->
+        <div class="glass-panel alerts-card highlight-border flex-grow">
+          <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center;">
+            <div class="title-with-icon">
+              <svg class="header-icon warning-icon" viewBox="0 0 24 24" width="24" height="24" fill="var(--ember-500)" style="animation: pulseIcon 2s infinite;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+              </svg>
+              <h2>Forest Alerts</h2>
+            </div>
+            <button id="btnRefreshAlerts" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.2rem;" title="Force refresh NOAA warnings, ADOT road reports, and USGS seismology">
+              🔄 Refresh
+            </button>
+          </div>
+
+          <div class="alerts-container" id="alertsContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Road Status section -->
+            <div class="alert-item road-status-item" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 0.65rem;">
+              <div class="alert-item-header" style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                <span>🚗</span>
+                <strong style="font-size: 0.75rem; color: var(--stone-300); text-transform: uppercase; letter-spacing: 0.05em;">Road & Traffic Status</strong>
+              </div>
+              <p style="font-size: 0.85rem; margin: 0; color: var(--stone-400);" id="alertRoadStatus">Loading road reports...</p>
+            </div>
+
+            <!-- Law Enforcement / Forest Advisory section -->
+            <div class="alert-item advisory-item" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 0.65rem;">
+              <div class="alert-item-header" style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                <span>🌲</span>
+                <strong style="font-size: 0.75rem; color: var(--stone-300); text-transform: uppercase; letter-spacing: 0.05em;">Coronado Forest Bulletins</strong>
+              </div>
+              <p style="font-size: 0.85rem; margin: 0; color: var(--stone-400);" id="alertAdvisory">Loading bulletins...</p>
+            </div>
+
+            <!-- NOAA weather warnings list -->
+            <div class="alert-item weather-alerts-item" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 0.65rem;">
+              <div class="alert-item-header" style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                <span>🌩️</span>
+                <strong style="font-size: 0.75rem; color: var(--stone-300); text-transform: uppercase; letter-spacing: 0.05em;">Active NOAA/NWS Warnings</strong>
+              </div>
+              <ul id="alertWeatherList" style="font-size: 0.85rem; margin: 0; padding-left: 1.1rem; color: var(--stone-400); display: flex; flex-direction: column; gap: 0.25rem;">
+                <li style="color: var(--stone-500); list-style: none; margin-left: -1.1rem;">Checking weather alerts...</li>
+              </ul>
+            </div>
+
+            <!-- USGS geological events list -->
+            <div class="alert-item geological-alerts-item" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 0.65rem;">
+              <div class="alert-item-header" style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                <span>🌋</span>
+                <strong style="font-size: 0.75rem; color: var(--stone-300); text-transform: uppercase; letter-spacing: 0.05em;">Geological Activity (USGS)</strong>
+              </div>
+              <ul id="alertGeoList" style="font-size: 0.85rem; margin: 0; padding-left: 1.1rem; color: var(--stone-400); display: flex; flex-direction: column; gap: 0.25rem;">
+                <li style="color: var(--stone-500); list-style: none; margin-left: -1.1rem;">Checking seismology...</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; flex-wrap: wrap; gap: 0.5rem;">
+            <span style="color: var(--stone-500);" id="alertsLastUpdated">Loading updates...</span>
+            <div style="display: flex; gap: 0.6rem;">
+              <a href="https://webcms.pima.gov/cms/One.aspx?pageId=767491" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;" title="Pima County Road Closures Info">Pima Roads</a>
+              <a href="https://az511.com/" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;" title="Arizona DOT AZ511 Traffic Info">AZ511 Traffic</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspirational Quote of the Day -->
+        <div class="glass-panel quote-card highlight-border-orange">
+          <div class="card-header-simple">
+            <span class="card-pretitle">Daily Inspiration</span>
+            <h3>Campfire Wisdom</h3>
+          </div>
+          <blockquote class="inspiration-quote">
+            <p id="quoteText">"Look wide, and even when you think you are looking wide - look wider still."</p>
+            <cite id="quoteAuthor">— Lord Baden-Powell</cite>
+          </blockquote>
+        </div>
+
+        <!-- History & Holidays Panel -->
+        <div class="glass-panel history-card">
+          <div class="card-header-simple">
+            <span class="card-pretitle">Scouting Almanac</span>
+            <h3>Today in Scouting</h3>
+          </div>
+          <!-- Holiday Display -->
+          <div class="holiday-box">
+            <span class="holiday-badge">📅 Today's Date</span>
+            <p id="holidayText" class="holiday-name">National Outdoor Appreciation Day</p>
+          </div>
+          <!-- History Milestones -->
+          <div class="history-content">
+            <div class="history-year-tag">
+              <span class="history-label">On This Date in</span>
+              <span class="history-year" id="historyYear">1916</span>
+            </div>
+            <h4 id="historyTitle" class="history-event-title">BSA Federal Charter Signed</h4>
+            <p id="historyDesc" class="history-event-desc">
+              President Woodrow Wilson signed a bill granting a Congressional Federal Charter to the Boy Scouts of America, protecting its brand and insignia.
+            </p>
+          </div>
+        </div>
+
+        <!-- Promote & Reserve Card -->
+        <div class="glass-panel links-card highlight-border">
+          <div class="card-header-simple">
+            <span class="card-pretitle">Promote & Reserve</span>
+            <h3>Camp Registration</h3>
+          </div>
+          <ul class="resource-links-list">
+            <li>
+              <a href="#troop-reservations" id="linkReservations" style="border-left: 3px solid var(--ember-500); color: #fff;">
+                <span>⛺ 2026 Troop Reservations</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#camp-map" id="linkCampMap" style="border-left: 3px solid var(--forest-300); color: #fff;">
+                <span>🗺️ Interactive Camp Map</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#virtual-tour" style="border-left: 3px solid var(--forest-300); color: #fff;" onclick="alert('📽️ Virtual Camp Tour & Video Placeholder\n\nWatch our promotional video showcasing Camp Lawton\'s facilities, programs, and summer camp vibe at 7,779 feet on Mt. Lemmon. A complete interactive 3D map is coming soon!')">
+                <span>📽️ Virtual Tour & Video</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#brochure" style="border-left: 3px solid var(--forest-300); color: #fff;" onclick="alert('📣 Camp Lawton Brochure Placeholder\n\nDownload the promotional PDF brochure to share with your scouts and families at your next troop meeting.')">
+                <span>📣 Camp Lawton Brochure</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://scoutingevent.com/011-camplawton" target="_blank" rel="noopener">
+                <span>Official Registration Portal</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Camp Preparation Card -->
+        <div class="glass-panel links-card highlight-border">
+          <div class="card-header-simple">
+            <span class="card-pretitle">Preparing for Camp</span>
+            <h3>Resources & Guides</h3>
+          </div>
+          <ul class="resource-links-list">
+            <li>
+              <a href="apply.html" style="border-left: 3px solid var(--ember-500); font-weight: 700; color: #fff;">
+                <span>⚜️ Apply for 2026 Staff</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#leaders-guide" id="linkLeadersGuide" style="border-left: 3px solid var(--forest-300); color: #fff;">
+                <span>📘 2026 Leader\'s Guide</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#staff-handbook" id="linkStaffHandbook" style="border-left: 3px solid var(--forest-300); color: #fff;">
+                <span>📙 2026 Staff Handbook</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#packing-list" style="border-left: 3px solid var(--forest-300); color: #fff;" onclick="alert('🎒 Camp Packing Checklist Placeholder\n\nDownload the official personal and troop gear packing list. Remember that Camp Lawton sits at 7,779 feet, so warm layers (temperatures can drop to the 40s at night), sleeping bags, and sturdy hiking boots are essential!')">
+                <span>🎒 Camp Packing List</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#medical-forms" style="border-left: 3px solid var(--forest-300); color: #fff;" onclick="alert('⚕️ BSA Medical Forms A, B & C\n\nAll participants must submit BSA Annual Health and Medical Records (Parts A, B, and C signed by a licensed physician). Ensure your medical reviews are completed before arrival at Mt. Lemmon.')">
+                <span>⚕️ BSA Medical Forms</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="#merit-badges" id="linkMeritBadges" style="border-left: 3px solid var(--forest-300); color: #fff;">
+                <span>🎯 Merit Badge Catalog</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.catalinacouncil.org" target="_blank" rel="noopener">
+                <span>Catalina Council Portal</span>
+                <span class="link-arrow">➔</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Alumni & Post-Camp Portal Card -->
+        <div class="glass-panel alumni-card highlight-border-orange" style="margin-block-start: 1rem;">
+          <div class="card-header-simple">
+            <span class="card-pretitle">Camp Community</span>
+            <h3>Alumni & Post-Camp</h3>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+            <p style="color: var(--stone-400); margin: 0; line-height: 1.4;">Attended Camp Lawton? Stay connected or resolve issues below!</p>
+            <a href="#survey" class="btn btn-secondary" style="justify-content: center; font-size: 0.75rem; padding: 0.5rem; text-decoration: none;" onclick="alert('📋 Post-Camp Survey Placeholder\n\nThis opens the official Catalina Council post-camp evaluation survey to gather feedback from scouts, adult leaders, and parents to resolve issues and improve camp operations.')">
+              📋 2026 Feedback Survey
+            </a>
+            <a href="#alumni" class="btn btn-secondary" style="justify-content: center; font-size: 0.75rem; padding: 0.5rem; text-decoration: none;" onclick="alert('⚜️ Staff Alumni Group Association\n\nThis links to the registration page for the Camp Lawton Staff Alumni & Friends Association, keeping former staff engaged in support workdays, camp promotion, and reunions.')">
+              ⚜️ Join the Alumni Group
+            </a>
+            <a href="#lostfound" class="btn btn-secondary" style="justify-content: center; font-size: 0.75rem; padding: 0.5rem; text-decoration: none;" onclick="alert('🔍 Lost & Found Claim Form\n\nMissing gear from camp? Submit a Lost & Found inquiry detailing your item description, campsite, and week of attendance so our camp ranger can search the camp chest.')">
+              🔍 Lost & Found Claims
+            </a>
+            <a href="#advancement" class="btn btn-secondary" style="justify-content: center; font-size: 0.75rem; padding: 0.5rem; text-decoration: none;" onclick="alert('🏆 Advancement Record Resolution\n\nNeed to resolve a missing merit badge blue card or check advancement reports? Contact our council registrar to verify and update camp records.')">
+              🏆 Advancement Issues
+            </a>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT COLUMN: MAIN CONTENT PANELS -->
+      <section class="main-column flex-col" aria-label="Weather and Camp Activities">
+        
+        <!-- Unit Reservation Callout Box -->
+        <div class="glass-panel highlight-border" style="margin-bottom: 0.25rem; display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <span style="font-size: 2.2rem; line-height: 1;">⛺</span>
+              <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem;">Troop Camp Reservations Open!</h3>
+                <p style="font-size: 0.8rem; color: var(--stone-400);">Register your unit for the 2026 summer season. Choose your week, campsite, and plan your outdoor program.</p>
+              </div>
+            </div>
+            <button type="button" id="btnMainReservations" class="btn btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; background: linear-gradient(135deg, var(--forest-400), var(--forest-600)); box-shadow: 0 4px 15px rgba(59, 132, 98, 0.3);">
+              Reserve Camp Spot
+            </button>
+          </div>
+          
+          <!-- Quick Resources Row -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.8rem;">
+            <span style="color: var(--stone-500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; align-self: center;">Leader Resources:</span>
+            <a href="#leaders-guide" id="btnMainLeadersGuide" style="color: var(--forest-200); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+              📘 2026 Leader's Guide
+            </a>
+            <a href="#camp-map" id="btnMainCampMap" style="color: var(--forest-200); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+              🗺️ Interactive Camp Map
+            </a>
+            <a href="#merit-badges" id="btnMainMeritBadges" style="color: var(--forest-200); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+              🎯 Merit Badge Catalog
+            </a>
+          </div>
+        </div>
+
+        <!-- Staff Application Hero Callout -->
+        <div class="glass-panel highlight-border-orange" style="margin-bottom: 0.25rem; display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <span style="font-size: 2.2rem; line-height: 1;">⚜️</span>
+              <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem;">Join Our 2026 Camp Staff!</h3>
+                <p style="font-size: 0.8rem; color: var(--stone-400);">Make a difference, build leadership skills, and have an unforgettable summer at 8,000 feet on Mt. Lemmon. Applications are now open.</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+              <button type="button" id="btnMainStaffHandbook" class="btn btn-secondary" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1);">
+                📙 Staff Handbook
+              </button>
+              <a href="apply.html" class="btn btn-primary" style="text-decoration: none; padding: 0.65rem 1.25rem; font-size: 0.85rem; background: linear-gradient(135deg, var(--ember-500), var(--ember-600)); border-color: rgba(255,159,67,0.2); box-shadow: 0 4px 15px rgba(255, 159, 67, 0.25);">
+                Apply Online Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camp Bulletin Board (Daily Announcement Widget) -->
+        <div id="bulletinCard" class="glass-panel highlight-border-orange hidden" style="background: rgba(255, 159, 67, 0.04); border-left-color: var(--ember-500); margin-bottom: 0.25rem;">
+          <div class="card-header-simple" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+            <div>
+              <span class="card-pretitle" style="color: var(--ember-500);">📢 Live Camp Updates</span>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0.1rem 0 0 0;">Camp Bulletin Board</h3>
+            </div>
+            <span class="badge badge-pulse" style="background: rgba(255, 159, 67, 0.15); color: var(--ember-500); border: 1px solid rgba(255,159,67,0.3); margin: 0; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600;">Active Announcement</span>
+          </div>
+          <p id="bulletinContent" style="font-size: 0.95rem; line-height: 1.5; color: #e6eae8; margin: 0; font-weight: 500;">
+            Loading announcement...
+          </p>
+        </div>
+
+        <!-- Live Weather Card -->
+        <div class="glass-panel weather-main-card highlight-border">
+          <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
+            <div class="title-with-icon">
+              <svg class="header-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1V3c0-.55.45-1 1-1zm0 14c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1v-2c0-.55.45-1 1-1zM4 11h2c.55 0 1 .45 1 1s-.45 1-1 1H4c-.55 0-1-.45-1-1s.45-1 1-1zm14 0h2c.55 0 1 .45 1 1s-.45 1-1 1h-2c-.55 0-1-.45-1-1s.45-1 1-1zM5.17 4.75c.39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0L5.17 6.16c-.39-.39-.39-1.03 0-1.41zm10.83 10.83c.39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0l-1.41-1.41c-.39-.39-.39-1.03 0-1.41zM6.58 16.99c.39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0l-1.41-1.41c-.39-.39-.39-1.02 0-1.41zm10.83-10.83c.39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0l-1.41-1.41c-.39-.39-.39-1.02 0-1.41z"/>
+              </svg>
+              <h2>Live Camp Station</h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <button id="btnRefreshWeather" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                🔄 Force Refresh
+              </button>
+              <span class="station-meta" id="weatherLastUpdated" style="font-size: 0.75rem; color: var(--stone-400);">Loading updates...</span>
+            </div>
+          </div>
+
+          <!-- Main Weather Display Grid -->
+          <div class="weather-main-grid">
+            <div class="weather-temp-hero">
+              <img id="weatherIcon" src="" alt="Weather Icon" class="weather-big-icon">
+              <div>
+                <div class="temp-val-wrapper">
+                  <span class="temp-val" id="currentTemp">--</span><span class="temp-unit">°F</span>
+                </div>
+                <span class="temp-desc" id="weatherDesc">Loading...</span>
+              </div>
+            </div>
+            
+            <!-- Secondary Stats Grid -->
+            <div class="weather-sub-stats">
+              <div class="stat-box">
+                <span class="stat-label">Wind Velocity</span>
+                <span class="stat-value" id="windValue">-- mph</span>
+                <div class="compass-container">
+                  <div class="compass-dial">
+                    <span class="compass-dir-n">N</span>
+                    <span class="compass-dir-s">S</span>
+                    <span class="compass-dir-e">E</span>
+                    <span class="compass-dir-w">W</span>
+                    <div class="compass-needle" id="windCompassNeedle"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stat-box">
+                <span class="stat-label">Relative Humidity</span>
+                <span class="stat-value" id="humidityValue">--%</span>
+                <div class="humidity-bar-wrapper">
+                  <div class="humidity-bar" id="humidityBar" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="stat-box">
+                <span class="stat-label">Precipitation Chance</span>
+                <span class="stat-value" id="precipValue">--%</span>
+                <div class="humidity-bar-wrapper">
+                  <div class="humidity-bar" id="precipBar" style="width: 0%; background: linear-gradient(90deg, #3498db, #2980b9);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Camp Lawton Elevation Cooling Card -->
+          <div class="elevation-alert-card">
+            <div class="cooling-icon">❄️</div>
+            <div class="cooling-text">
+              <h4>Elevation Cooling Factor</h4>
+              <p>Camp Lawton is typically <strong>20°F to 30°F cooler</strong> than Tucson. Perfect for summer activities, but carry warmer layers for evening programs!</p>
+            </div>
+            <div class="cooling-delta">
+              <span class="delta-tucson">Tucson: 101°F</span>
+              <span class="delta-arrow">➔</span>
+              <span class="delta-camp" id="campTempCooling">Camp: 72°F</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10-Day Extended Forecast Grid -->
+        <div class="glass-panel forecast-section">
+          <div class="forecast-header">
+            <h3>10-Day Extended Forest Forecast</h3>
+            <span class="forecast-meta">Camp Lawton & Organization Ridge Range</span>
+          </div>
+          <div class="forecast-grid-10" id="forecastGrid">
+            <!-- Dynamically populated card slots -->
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+            <div class="forecast-card skeleton-card"></div>
+          </div>
+        </div>
+
+        <!-- Activity Advisor Widget -->
+        <div class="glass-panel advisor-section highlight-border-orange">
+          <div class="advisor-header">
+            <h3>Camp Activity Advisor</h3>
+            <span class="advisor-status" id="advisorStatusBadge">Normal Operations</span>
+          </div>
+          <p class="advisor-intro">Suggested adjustments for scout programs today based on wind, weather, and fire risk levels:</p>
+          <div class="advisor-grid" id="advisorGrid">
+            <div class="advisor-item">
+              <span class="adv-icon">🏕️</span>
+              <div>
+                <strong>Campfire Programs</strong>
+                <p id="advCampfireText">Wood and charcoal campfires permitted in designated steel campfire rings.</p>
+              </div>
+            </div>
+            <div class="advisor-item">
+              <span class="adv-icon">🍳</span>
+              <div>
+                <strong>Dutch Oven Cooking</strong>
+                <p id="advCookingText">Dutch oven cooking is allowed. Adult supervision and a water bucket are required.</p>
+              </div>
+            </div>
+            <div class="advisor-item">
+              <span class="adv-icon">🥾</span>
+              <div>
+                <strong>High Adventure Hikes</strong>
+                <p id="advHikeText">Favorable. Trails are open. Please stay on paths and carry plenty of drinking water.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camp Lawton Blog Section -->
+        <div class="glass-panel blog-section">
+          <div class="section-header">
+            <div class="title-with-icon">
+              <span class="sec-icon">📝</span>
+              <h3>Camp Lawton Blog</h3>
+            </div>
+            <a href="#" class="section-header-link">View All Posts</a>
+          </div>
+          <div class="blog-grid" id="blogGrid">
+            <!-- Dynamically loaded blog cards -->
+            <div class="blog-card-skeleton"></div>
+            <div class="blog-card-skeleton"></div>
+          </div>
+        </div>
+
+        <!-- Catalina Council & Scouting America News & Upcoming Events -->
+        <div class="glass-panel events-section highlight-border">
+          <div class="section-header">
+            <div class="title-with-icon">
+              <span class="sec-icon">⚜️</span>
+              <h3>Council News & Upcoming Events</h3>
+            </div>
+            <a href="https://www.catalinacouncil.org/calendar/" target="_blank" rel="noopener" class="section-header-link">Full Council Calendar</a>
+          </div>
+          <div class="events-grid" id="eventsGrid">
+            <!-- Dynamically loaded events -->
+            <div class="event-card-skeleton"></div>
+            <div class="event-card-skeleton"></div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <p>© 2026 Catalina Council - Scouting America. Camp Lawton Scout Camp, Mt. Lemmon, AZ.</p>
+      <p class="footer-fineprint">Data aggregated from <a href="https://forecast.weather.gov/MapClick.php?lat=32.44&lon=-110.78" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;">National Weather Service</a> and <a href="https://open-meteo.com/" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;">Open-Meteo API</a>. Safety ratings are official mandates of <a href="https://www.fs.usda.gov/alerts/coronado/alerts-notices" target="_blank" rel="noopener" style="color: var(--forest-200); text-decoration: underline;">Coronado National Forest (US Forest Service)</a>.</p>
+    </footer>
+  </div>
+
+  <!-- Admin Controls Dialog (Hidden Modal) -->
+  <dialog id="adminDialog" class="admin-dialog glass-panel">
+    <div class="admin-header">
+      <h2>Camp Director Portal</h2>
+      <button class="admin-close-btn" id="adminCloseBtn" aria-label="Close settings">✕</button>
+    </div>
+    
+    <form id="adminForm" class="admin-form">
+      <div class="form-group" id="pinFormGroup">
+        <label for="adminPinInput">Enter Camp Director PIN:</label>
+        <input type="password" id="adminPinInput" required placeholder="••••">
+        <span class="error-msg hidden" id="pinError">Invalid PIN. Try again.</span>
+      </div>
+
+      <div id="adminControlsBlock" class="hidden-controls-block">
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-tabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <button type="button" class="admin-tab-btn active" data-tab="dashboard">Dashboard Config</button>
+          <button type="button" class="admin-tab-btn" data-tab="applications" id="adminApplicationsTab">Staff Applications (<span id="applicationsCount">0</span>)</button>
+          <button type="button" class="admin-tab-btn" data-tab="reservations" id="adminReservationsTab">Troop Reservations (<span id="reservationsCount">0</span>)</button>
+          <button type="button" class="admin-tab-btn" data-tab="blog" id="adminBlogTab">Blog Manager</button>
+        </div>
+
+        <!-- TAB 1: Dashboard Config -->
+        <div class="admin-tab-content active" id="tabContent-dashboard">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminFireDanger">Fire Danger Level:</label>
+            <select id="adminFireDanger">
+              <option value="Low">Low (Green)</option>
+              <option value="Moderate">Moderate (Yellow)</option>
+              <option value="High">High (Orange)</option>
+              <option value="Very High">Very High (Red-Orange)</option>
+              <option value="Extreme">Extreme (Bright Red)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminRestriction">Campfire Restriction Level:</label>
+            <select id="adminRestriction">
+              <option value="Permitted">Permitted (Open Fire Rings)</option>
+              <option value="Restricted">Restricted (Steel Rings Only)</option>
+              <option value="Banned">Banned (No Campfires / Open Flames)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminAlertText">Custom Fire / Safety Alert Text:</label>
+            <textarea id="adminAlertText" rows="3" placeholder="Enter custom message to show on the dashboard..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminRoadStatus">Road Status / Closures:</label>
+            <input type="text" id="adminRoadStatus" placeholder="e.g. Catalina Highway is OPEN (No restrictions)...">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminAdvisoryAlert">Active Forest Advisory / LE Alert:</label>
+            <textarea id="adminAdvisoryAlert" rows="2" placeholder="e.g. Bear activity advisory, law enforcement checkpoint details..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="adminBulletinText">Camp Bulletin Board / Daily Announcement:</label>
+            <textarea id="adminBulletinText" rows="3" placeholder="Enter daily camp updates for scouts and leaders..."></textarea>
+          </div>
+        </div>
+
+        <!-- TAB 2: Staff Applications Review -->
+        <div class="admin-tab-content" id="tabContent-applications">
+          <div class="applications-filters" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center;">
+            <input type="text" id="appSearchInput" placeholder="Search by name, email, or unit..." style="flex-grow: 1; padding: 0.45rem 0.65rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; font-size: 0.8rem;">
+            <select id="appStatusFilter" style="padding: 0.45rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; font-size: 0.8rem;">
+              <option value="all">All Statuses</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Interview Scheduled">Interview Scheduled</option>
+              <option value="Hired">Hired</option>
+              <option value="Declined">Declined</option>
+            </select>
+            <button type="button" class="btn btn-secondary" id="btnExportApps" style="font-size: 0.75rem; padding: 0.45rem 0.65rem; border-radius: 6px;">Export CSV</button>
+          </div>
+
+          <div id="applicationsList" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 250px; overflow-y: auto; padding-right: 0.25rem;">
+            <p style="color: var(--stone-600); text-align: center; font-size: 0.85rem; padding: 1.5rem 0;">Loading applications...</p>
+          </div>
+        </div>
+
+        <!-- TAB 3: Troop Reservations Review -->
+        <div class="admin-tab-content" id="tabContent-reservations">
+          <div class="reservations-filters" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center;">
+            <input type="text" id="resSearchInput" placeholder="Search by troop, contact, campsite..." style="flex-grow: 1; padding: 0.45rem 0.65rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; font-size: 0.8rem;">
+            <select id="resStatusFilter" style="padding: 0.45rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; font-size: 0.8rem;">
+              <option value="all">All Statuses</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Pending Deposit">Pending Deposit</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div id="reservationsList" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 250px; overflow-y: auto; padding-right: 0.25rem;">
+            <p style="color: var(--stone-600); text-align: center; font-size: 0.85rem; padding: 1.5rem 0;">Loading reservations...</p>
+          </div>
+        </div>
+
+        <!-- TAB 4: Blog Manager -->
+        <div class="admin-tab-content" id="tabContent-blog">
+          <div id="blogFormContainer" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <h4 style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">Write a New Post</h4>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="adminBlogTitle">Post Title:</label>
+              <input type="text" id="adminBlogTitle" placeholder="e.g. Bear Activity Warning...">
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="adminBlogCategory">Category:</label>
+              <input type="text" id="adminBlogCategory" placeholder="e.g. Safety Alerts, Nature, Events...">
+            </div>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label for="adminBlogSummary">Summary / Body:</label>
+              <textarea id="adminBlogSummary" rows="3" placeholder="Enter post summary details..."></textarea>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnPublishPost" style="font-size: 0.75rem; padding: 0.45rem 1rem; border-radius: 6px;">Publish Post</button>
+            <div id="blogPublishStatus" style="font-size: 0.75rem; margin-top: 0.5rem; color: #2ecc71;"></div>
+          </div>
+        </div>
+        
+        <div class="form-success hidden" id="adminSuccessMsg">Settings updated successfully!</div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="adminCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="adminSaveBtn">Authenticate</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Troop Reservation Dialog -->
+  <dialog id="reservationDialog" class="camp-dialog glass-panel">
+    <div class="admin-header">
+      <h2>⛺ Troop Reservations Portal</h2>
+      <button type="button" class="admin-close-btn" id="reservationCloseBtn" aria-label="Close reservation portal">✕</button>
+    </div>
+    <form id="reservationForm" class="admin-form">
+      <div style="font-size: 0.85rem; color: var(--stone-400); margin-bottom: 0.5rem; line-height: 1.4;">
+        Secure your Troop's campsite at Camp Lawton for the 2026 summer season. Enter your details below to submit a reservation.
+      </div>
+      <div class="form-group">
+        <label for="resTroopNumber">Troop Number:</label>
+        <input type="text" id="resTroopNumber" required placeholder="e.g. Troop 121">
+      </div>
+      <div class="form-group">
+        <label for="resCouncil">Council:</label>
+        <input type="text" id="resCouncil" required placeholder="e.g. Catalina Council">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label for="resScoutsCount">Scouts Count:</label>
+          <input type="number" id="resScoutsCount" required min="1" placeholder="15">
+        </div>
+        <div class="form-group">
+          <label for="resLeadersCount">Leaders Count:</label>
+          <input type="number" id="resLeadersCount" required min="1" placeholder="3">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="resWeek">Select Camp Week:</label>
+        <select id="resWeek" required>
+          <option value="Week 1 (June 14 - June 20)">Week 1 (June 14 - June 20)</option>
+          <option value="Week 2 (June 21 - June 27)">Week 2 (June 21 - June 27)</option>
+          <option value="Week 3 (June 28 - July 4)">Week 3 (June 28 - July 4)</option>
+          <option value="Week 4 (July 5 - July 11)">Week 4 (July 5 - July 11)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="resCampsite">Preferred Campsite:</label>
+        <select id="resCampsite" required>
+          <option value="Apache">Apache (Capacity 30)</option>
+          <option value="Navajo">Navajo (Capacity 40)</option>
+          <option value="Zuni">Zuni (Capacity 25)</option>
+          <option value="Hopi">Hopi (Capacity 25)</option>
+          <option value="Mohave">Mohave (Capacity 20)</option>
+          <option value="Gila">Gila (Capacity 20)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="resContactName">Contact Leader Name:</label>
+        <input type="text" id="resContactName" required placeholder="e.g. Robert Martinez">
+      </div>
+      <div class="form-group">
+        <label for="resContactEmail">Contact Leader Email:</label>
+        <input type="email" id="resContactEmail" required placeholder="e.g. leader@troop121.org">
+      </div>
+      <div class="form-success hidden" id="reservationSuccessMsg"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="reservationCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--ember-500), var(--ember-600)); border-color: rgba(255,159,67,0.2); box-shadow: 0 4px 15px rgba(255, 159, 67, 0.25);">Submit Booking</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Leader's Guide Dialog -->
+  <dialog id="leadersGuideDialog" class="camp-dialog glass-panel wide-dialog">
+    <div class="admin-header">
+      <h2>📘 2026 Leader's Guide & Handbook</h2>
+      <button type="button" class="admin-close-btn" id="leadersGuideCloseBtn" aria-label="Close guide">✕</button>
+    </div>
+    <div class="admin-tabs" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 1rem;">
+      <button type="button" class="admin-tab-btn active" data-guide-tab="schedule">Daily Schedule</button>
+      <button type="button" class="admin-tab-btn" data-guide-tab="gear">Packing List</button>
+      <button type="button" class="admin-tab-btn" data-guide-tab="policies">Camp Policies</button>
+      <button type="button" class="admin-tab-btn" data-guide-tab="contact">Council Info</button>
+    </div>
+    
+    <div class="guide-tab-content active" id="guideTab-schedule">
+      <div class="guide-scrollable">
+        <h3>Camp Lawton Summer Schedule</h3>
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Activity</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>07:00 AM</td>
+              <td>Morning Flag Raising Ceremony</td>
+              <td>Parade Grounds</td>
+            </tr>
+            <tr>
+              <td>07:15 AM</td>
+              <td>Breakfast (Shift A / Shift B)</td>
+              <td>Dining Hall</td>
+            </tr>
+            <tr>
+              <td>08:30 AM - 11:30 AM</td>
+              <td>Morning Merit Badge Blocks (A, B, C)</td>
+              <td>Program Areas</td>
+            </tr>
+            <tr>
+              <td>12:00 PM</td>
+              <td>Lunch & Rest Period (Siesta)</td>
+              <td>Campsites / Dining Hall</td>
+            </tr>
+            <tr>
+              <td>01:30 PM - 04:30 PM</td>
+              <td>Afternoon Merit Badge Blocks & Free Swim</td>
+              <td>Pool / Shooting Range / Climbing Wall</td>
+            </tr>
+            <tr>
+              <td>05:45 PM</td>
+              <td>Dinner Flag Lowering Ceremony</td>
+              <td>Parade Grounds</td>
+            </tr>
+            <tr>
+              <td>06:00 PM</td>
+              <td>Dinner</td>
+              <td>Dining Hall</td>
+            </tr>
+            <tr>
+              <td>07:30 PM</td>
+              <td>Campfire Programs / Chapel Service</td>
+              <td>Campfire Circle</td>
+            </tr>
+            <tr>
+              <td>10:00 PM</td>
+              <td>Taps - Lights Out (Quiet Hours begin)</td>
+              <td>All Campsites</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="guide-tab-content" id="guideTab-gear">
+      <div class="guide-scrollable">
+        <h3>Recommended Gear Packing List</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <h4 style="color: var(--ember-400); margin-bottom: 0.5rem;">🎒 Personal Gear</h4>
+            <ul class="checklist-ul" style="font-size: 0.8rem; color: var(--stone-400); padding-left: 1.2rem; line-height: 1.5;">
+              <li>BSA Field Uniform (Class A) & Activity T-Shirts (Class B)</li>
+              <li>Warm sleeping bag (rated to 40°F) & sleeping pad</li>
+              <li>Sturdy hiking boots (broken in) & extra socks</li>
+              <li>Warm jacket / fleece (Mt. Lemmon nights are cold!)</li>
+              <li>Flashlight / headlamp with spare batteries</li>
+              <li>Water bottle (minimum 2 liters capacity)</li>
+              <li>Sunscreen, insect repellent, and lip balm</li>
+              <li>Personal toiletries & towel</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style="color: var(--forest-300); margin-bottom: 0.5rem;">⛺ Troop Equipment</h4>
+            <ul class="checklist-ul" style="font-size: 0.8rem; color: var(--stone-400); padding-left: 1.2rem; line-height: 1.5;">
+              <li>Troop first aid kit & medical records (A, B, C)</li>
+              <li>Fire buckets, rake, shovel for campsite safety</li>
+              <li>Dutch ovens, charcoal, and cooking chimney</li>
+              <li>Lanterns (battery-powered preferred)</li>
+              <li>BSA and Troop Flags</li>
+              <li>Camp chairs for adult leaders</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="guide-tab-content" id="guideTab-policies">
+      <div class="guide-scrollable">
+        <h3>Camp Rules & Forest Mandates</h3>
+        <div class="policy-box-item" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.65rem; margin-bottom: 0.75rem;">
+          <strong style="color: #fff; font-size: 0.85rem; display: block; margin-bottom: 0.2rem;">🔥 Fire Safety Policy</strong>
+          <p style="font-size: 0.8rem; color: var(--stone-400); margin: 0; line-height: 1.4;">All open fires must be confined to the designated steel rings in your campsite. A 10-foot clearing around the ring is mandatory. Keep a filled water bucket and shovel nearby. Do not leave fires unattended. Restrictions change daily with USFS directives.</p>
+        </div>
+        <div class="policy-box-item" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.65rem; margin-bottom: 0.75rem;">
+          <strong style="color: #fff; font-size: 0.85rem; display: block; margin-bottom: 0.2rem;">🐻 Wildlife Protocols</strong>
+          <p style="font-size: 0.8rem; color: var(--stone-400); margin: 0; line-height: 1.4;">Camp Lawton sits in bear and coati habitat. No food, candy, toothpaste, or scented items are permitted in tents. Store all foodstuffs in campsite bear boxes or the dining hall. Pack trash out to dumpsters daily.</p>
+        </div>
+        <div class="policy-box-item" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.65rem;">
+          <strong style="color: #fff; font-size: 0.85rem; display: block; margin-bottom: 0.2rem;">💧 Hydration & Altitude</strong>
+          <p style="font-size: 0.8rem; color: var(--stone-400); margin: 0; line-height: 1.4;">At 7,779 feet elevation, dehydration occurs rapidly. All campers must drink at least 3-4 liters of water daily. Monitor scouts for signs of altitude sickness (headache, fatigue, nausea).</p>
+        </div>
+      </div>
+    </div>
+    <div class="guide-tab-content" id="guideTab-contact">
+      <div class="guide-scrollable">
+        <h3>Catalina Council Support Contacts</h3>
+        <p style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--stone-400);">Have questions regarding camp reservations, advancement files, or facilities? Get in touch with our team:</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.75rem; list-style: none; padding: 0;">
+          <li style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+            <strong style="color: #fff;">Camp Director:</strong> director@camplawton.org • (520) 555-0192
+          </li>
+          <li style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+            <strong style="color: #fff;">Council Registrar:</strong> registrar@catalinacouncil.org • (520) 750-0385
+          </li>
+          <li style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+            <strong style="color: #fff;">Camp Ranger Station:</strong> (520) 555-0195 (Urgent facility issues only)
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top: 1rem;">
+      <button type="button" class="btn btn-primary" onclick="alert('PDF download simulated. In production, this links to the official Leader\'s Guide PDF.')">Download Full PDF Guide</button>
+      <button type="button" class="btn btn-secondary" id="leadersGuideCancelBtn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Staff Handbook Dialog -->
+  <dialog id="staffHandbookDialog" class="camp-dialog glass-panel wide-dialog">
+    <div class="admin-header">
+      <h2>📙 2026 Camp Staff Handbook</h2>
+      <button type="button" class="admin-close-btn" id="staffHandbookCloseBtn" aria-label="Close handbook">✕</button>
+    </div>
+    <div class="guide-scrollable" style="max-height: 350px;">
+      <h3 style="margin-top: 0;">Welcome to the Camp Lawton Staff Association</h3>
+      <p style="color: var(--stone-400); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1rem;">
+        Being on staff at Camp Lawton is both a privilege and a high responsibility. You represent Scouting America and the Catalina Council to hundreds of youth weekly.
+      </p>
+      
+      <h4 style="color: var(--ember-400); margin-top: 1rem; margin-bottom: 0.4rem;">1. Code of Professional Conduct</h4>
+      <p style="font-size: 0.8rem; color: var(--stone-400); line-height: 1.4; margin-bottom: 0.8rem;">
+        All staff must adhere to the Scout Oath and Scout Law. Professional relationships must be maintained at all times. Staff will follow the Youth Protection guidelines strictly (no one-on-one contact, separate housing by age groups, etc.).
+      </p>
+
+      <h4 style="color: var(--ember-400); margin-top: 1rem; margin-bottom: 0.4rem;">2. Uniform Guidelines</h4>
+      <p style="font-size: 0.8rem; color: var(--stone-400); line-height: 1.4; margin-bottom: 0.8rem;">
+        - <strong>Field Uniform (Class A):</strong> Worn for morning and evening flag ceremonies, dinners, and campfire programs. Consists of official scout shirt, scout shorts/pants, scout belt, and scout socks.<br>
+        - <strong>Activity Uniform (Class B):</strong> Worn during the day for teaching blocks. Consists of a Camp Lawton staff t-shirt and appropriate shorts/pants.
+      </p>
+
+      <h4 style="color: var(--ember-400); margin-top: 1rem; margin-bottom: 0.4rem;">3. Cabin Housing & Dining Hall Rules</h4>
+      <p style="font-size: 0.8rem; color: var(--stone-400); line-height: 1.4; margin-bottom: 0.8rem;">
+        Staff cabins are grouped by age (under 18 Jr. Staff vs. 18+ Adult Staff). Cabins must be kept clean and are subject to inspection by the Camp Commissioner. Meals are provided in the Dining Hall. Staff must arrive 10 minutes prior to meals to help set up tables.
+      </p>
+
+      <h4 style="color: var(--ember-400); margin-top: 1rem; margin-bottom: 0.4rem;">4. Time Off & Time Out Policy</h4>
+      <p style="font-size: 0.8rem; color: var(--stone-400); line-height: 1.4; margin-bottom: 0.8rem;">
+        Staff receive 24 hours of time off per week, starting Saturday at noon until Sunday at noon. All staff must check out with the Camp Director before leaving Coronado National Forest.
+      </p>
+    </div>
+    <div class="form-actions" style="margin-top: 1rem;">
+      <button type="button" class="btn btn-primary" onclick="alert('PDF download simulated. In production, this links to the official Staff Handbook PDF.')">Download PDF Handbook</button>
+      <button type="button" class="btn btn-secondary" id="staffHandbookCancelBtn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Camp Map Dialog -->
+  <dialog id="campMapDialog" class="camp-dialog glass-panel wide-dialog">
+    <div class="admin-header">
+      <h2>🗺️ Camp Lawton Map & Facility Layout</h2>
+      <button type="button" class="admin-close-btn" id="campMapCloseBtn" aria-label="Close map">✕</button>
+    </div>
+    <div class="camp-map-layout">
+      <!-- Interactive Map Board -->
+      <div class="map-board" id="mapBoard">
+        <!-- Contour elevation details (Visual overlay) -->
+        <div class="map-terrain">
+          <div class="contour-line contour-1"></div>
+          <div class="contour-line contour-2"></div>
+          <div class="contour-line contour-3"></div>
+        </div>
+        
+        <!-- Trails / Roads -->
+        <div class="map-trail trail-main"></div>
+        
+        <!-- Location Markers -->
+        <!-- Program Areas -->
+        <button type="button" class="map-marker program-marker" style="top: 22%; left: 35%;" data-location="hq" title="Camp Headquarters">
+          🏢 <span class="marker-text">HQ</span>
+        </button>
+        <button type="button" class="map-marker program-marker" style="top: 48%; left: 52%;" data-location="dining" title="Dining Hall">
+          🍴 <span class="marker-text">Dining</span>
+        </button>
+        <button type="button" class="map-marker program-marker" style="top: 70%; left: 28%;" data-location="pool" title="Swimming Pool">
+          🏊 <span class="marker-text">Pool</span>
+        </button>
+        <button type="button" class="map-marker program-marker" style="top: 32%; left: 82%;" data-location="climbing" title="Climbing Wall">
+          🧗 <span class="marker-text">Climb</span>
+        </button>
+        <button type="button" class="map-marker program-marker" style="top: 12%; left: 60%;" data-location="shooting" title="Shooting Sports Range">
+          🎯 <span class="marker-text">Range</span>
+        </button>
+        
+        <!-- Campsites -->
+        <button type="button" class="map-marker campsite-marker" style="top: 52%; left: 20%;" data-location="apache" title="Apache Campsite">
+          ⛺ <span class="marker-text">Apache</span>
+        </button>
+        <button type="button" class="map-marker campsite-marker" style="top: 35%; left: 15%;" data-location="navajo" title="Navajo Campsite">
+          ⛺ <span class="marker-text">Navajo</span>
+        </button>
+        <button type="button" class="map-marker campsite-marker" style="top: 72%; left: 62%;" data-location="zuni" title="Zuni Campsite">
+          ⛺ <span class="marker-text">Zuni</span>
+        </button>
+        <button type="button" class="map-marker campsite-marker" style="top: 55%; left: 75%;" data-location="hopi" title="Hopi Campsite">
+          ⛺ <span class="marker-text">Hopi</span>
+        </button>
+      </div>
+      
+      <!-- Details Board -->
+      <div class="map-details-card glass-panel" id="mapDetailsCard">
+        <h3 id="mapLocName" style="font-family: var(--font-display); color: #fff; font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.4rem;">Select Location</h3>
+        <span class="location-elevation" id="mapLocElev" style="font-size: 0.75rem; color: var(--ember-400); font-weight: 600; display: block; margin-top: 0.35rem;">Click any marker on the map to explore camp facilities.</span>
+        <p id="mapLocDesc" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--stone-400); line-height: 1.4;">
+          Camp Lawton Scout Camp spans 80+ forested acres at 7,779 feet elevation on Mount Lemmon in the Coronado National Forest.
+        </p>
+        <div class="map-loc-stats hidden" id="mapLocStats" style="border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 0.5rem; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.78rem;">
+          <div><strong style="color: #fff;">Capacity:</strong> <span id="mapLocCap" style="color: var(--stone-400);">N/A</span></div>
+          <div><strong style="color: #fff;">Primary Activities:</strong> <span id="mapLocActs" style="color: var(--stone-400);">N/A</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top: 1rem;">
+      <button type="button" class="btn btn-secondary" id="campMapCancelBtn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Merit Badge Dialog -->
+  <dialog id="meritBadgeDialog" class="camp-dialog glass-panel wide-dialog">
+    <div class="admin-header">
+      <h2>🎯 Camp Lawton Merit Badge Catalog</h2>
+      <button type="button" class="admin-close-btn" id="meritBadgeCloseBtn" aria-label="Close catalog">✕</button>
+    </div>
+    
+    <div class="mb-search-bar-row" style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
+      <input type="text" id="mbSearchInput" placeholder="Search merit badges by name..." style="flex-grow: 1; padding: 0.55rem 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+      <select id="mbDeptFilter" style="padding: 0.55rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 0.85rem; max-width: 200px;">
+        <option value="all">All Departments</option>
+        <option value="Shooting Sports">Shooting Sports</option>
+        <option value="Ecology">Ecology & Conservation</option>
+        <option value="Outdoor Skills">Outdoor Skills</option>
+        <option value="Climbing">Climbing & High Adv</option>
+        <option value="First Aid">First Aid & Eagle Req</option>
+      </select>
+    </div>
+    
+    <div class="mb-grid" id="mbGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; max-height: 320px; overflow-y: auto; padding-right: 0.25rem;">
+      <!-- Dynamically populated merit badges -->
+    </div>
+    
+    <div class="form-actions" style="margin-top: 1rem;">
+      <button type="button" class="btn btn-secondary" id="meritBadgeCancelBtn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Dashboard Script -->
+  <script src="app.js"></script>
+</body>
+</html>

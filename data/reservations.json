@@ -1,0 +1,62 @@
+[
+  {
+    "id": "res_101",
+    "troopNumber": "Troop 121",
+    "council": "Catalina Council",
+    "scoutsCount": 18,
+    "leadersCount": 4,
+    "week": "Week 1 (June 14 - June 20)",
+    "campsite": "Apache",
+    "status": "Confirmed",
+    "contactName": "Robert Martinez",
+    "contactEmail": "rmartinez121@scouting.org"
+  },
+  {
+    "id": "res_102",
+    "troopNumber": "Troop 45",
+    "council": "Grand Canyon Council",
+    "scoutsCount": 24,
+    "leadersCount": 6,
+    "week": "Week 2 (June 21 - June 27)",
+    "campsite": "Navajo",
+    "status": "Confirmed",
+    "contactName": "Sarah Jenkins",
+    "contactEmail": "sjenkins45@gmail.com"
+  },
+  {
+    "id": "res_103",
+    "troopNumber": "Troop 316",
+    "council": "Catalina Council",
+    "scoutsCount": 12,
+    "leadersCount": 3,
+    "week": "Week 1 (June 14 - June 20)",
+    "campsite": "Zuni",
+    "status": "Pending Deposit",
+    "contactName": "David Miller",
+    "contactEmail": "dmiller316@yahoo.com"
+  },
+  {
+    "id": "res_104",
+    "troopNumber": "Troop 88",
+    "council": "Southern Arizona Council",
+    "scoutsCount": 15,
+    "leadersCount": 4,
+    "week": "Week 3 (June 28 - July 4)",
+    "campsite": "Hopi",
+    "status": "Confirmed",
+    "contactName": "William Vance",
+    "contactEmail": "wvance88@gmail.com"
+  },
+  {
+    "id": "res_1781733537492",
+    "troopNumber": "Troop 99",
+    "council": "Grand Canyon Council",
+    "scoutsCount": 15,
+    "leadersCount": 3,
+    "week": "Week 3 (June 28 - July 4)",
+    "campsite": "Mohave",
+    "status": "Pending Deposit",
+    "contactName": "John Doe",
+    "contactEmail": "johndoe@scouting.org"
+  }
+]

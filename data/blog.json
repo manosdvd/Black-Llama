@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "date": "2026-06-12",
+    "author": "Camp Director",
+    "title": "Pre-Season Staff Training Concludes",
+    "summary": "Our 2026 Camp Lawton staff completed intensive pre-season training, including Wilderness First Aid, archery range safety, and Leave No Trace principles.",
+    "category": "Staff Updates"
+  },
+  {
+    "id": 2,
+    "date": "2026-06-05",
+    "author": "Program Director",
+    "title": "Spotting the Catalina Coati on Mt. Lemmon",
+    "summary": "Nature staff reports multiple sightings of the white-nosed coati near Camp Lawton. Learn how our Nature study merit badge will observe them safely.",
+    "category": "Nature Study"
+  },
+  {
+    "id": 3,
+    "date": "2026-05-28",
+    "author": "Facilities Committee",
+    "title": "Pool Renovations Completed for Summer",
+    "summary": "Thanks to council donations and volunteer work, the Camp Lawton swimming pool features a newly resurfaced deck and upgraded heating units.",
+    "category": "Camp Upgrades"
+  },
+  {
+    "id": 4,
+    "date": "2026-05-15",
+    "author": "Eagle Association",
+    "title": "Eagle Scout Project Restores Historic Cabins",
+    "summary": "Scouts from Troop 121 completed structural repairs and fresh staining on the historic Adirondack-style cabins at the west end of camp.",
+    "category": "Eagle Service"
+  }
+]
