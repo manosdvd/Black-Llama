@@ -253,6 +253,13 @@ body {
   margin-block-start: 0.2rem;
 }
 
+#campTime {
+  width: 100%;
+  max-width: 310px;
+  min-width: 240px;
+  box-sizing: border-box;
+}
+
 /* Camp Status card */
 .camp-status-card {
   max-inline-size: 450px;
@@ -1509,7 +1516,29 @@ body {
   }
 
   .forecast-grid-10 {
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    -webkit-overflow-scrolling: touch;
+    grid-template-columns: none; /* Override standard grid */
+  }
+
+  .forecast-grid-10::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .forecast-grid-10::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  .forecast-card {
+    flex: 0 0 115px;
+    scroll-snap-align: start;
   }
 
   .advisor-grid {
@@ -1521,20 +1550,103 @@ body {
   }
 }
 
-@media (max-width: 580px) {
-  .forecast-grid-10 {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 600px) {
+  .branding {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .branding-text {
+    align-items: center;
+  }
+  
+  .branding-text h1 {
+    font-size: 1.85rem;
+  }
+  
+  .location-tag {
+    text-align: center !important;
+  }
+  
+  .location-tag a {
+    display: inline-block;
   }
 }
 
 @media (max-width: 480px) {
   .branding-text h1 {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
   }
   
   .temp-val {
-    font-size: 2.75rem;
+    font-size: 2.5rem;
   }
+}
+
+/* Dialog Responsiveness & Internal Scroll Controls */
+.admin-dialog,
+.camp-dialog {
+  max-height: 90vh;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.admin-dialog form,
+.camp-dialog form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.hidden-controls-block {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-tab-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.guide-scrollable {
+  max-height: none !important;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.camp-map-layout {
+  max-height: calc(90vh - 160px);
+  overflow-y: auto;
+}
+
+.mb-grid {
+  max-height: calc(90vh - 200px) !important;
+  overflow-y: auto;
+}
+
+/* TV D-Pad and Keyboard Focus Indicators */
+:focus-visible {
+  outline: 3px solid var(--ember-500) !important;
+  outline-offset: 3px !important;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--ember-500) !important;
+  outline-offset: 3px !important;
 }
 
 /* Admin Dialog Tabs & Staff Application Review Styles */

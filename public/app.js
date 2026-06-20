@@ -285,40 +285,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. FETCH AND RENDER DASHBOARD DATA
   async function loadDashboardData(force = false) {
-    try {
-      const weatherUrl = force ? '/api/weather?force=true' : '/api/weather';
-      const fireUrl = force ? '/api/fire-status?force=true' : '/api/fire-status';
-      const alertsUrl = force ? '/api/forest-alerts?force=true' : '/api/forest-alerts';
-      // Parallel fetches for weather, fire danger, and scouting almanac/blog/events
-      const [weatherRes, fireRes, scoutingRes, alertsRes] = await Promise.all([
-        fetch(weatherUrl).then(r => r.json()),
-        fetch(fireUrl).then(r => r.json()),
-        fetch('/api/scouting-data').then(r => r.json()),
-        fetch(alertsUrl).then(r => r.json())
-      ]);
+    const weatherUrl = force ? '/api/weather?force=true' : '/api/weather';
+    const fireUrl = force ? '/api/fire-status?force=true' : '/api/fire-status';
+    const alertsUrl = force ? '/api/forest-alerts?force=true' : '/api/forest-alerts';
 
-      if (weatherRes.success) {
-        renderWeather(weatherRes);
-      }
-      
-      if (fireRes.success) {
-        renderFireStatus(fireRes);
-      }
+    let weatherRes = null;
+    let fireRes = null;
+    let scoutingRes = null;
+    let alertsRes = null;
 
-      if (alertsRes && alertsRes.success) {
-        renderForestAlerts(alertsRes);
-      }
+    // Fetch and render all resources concurrently, isolated from each other's errors
+    await Promise.all([
+      (async () => {
+        try {
+          const r = await fetch(weatherUrl);
+          if (r.ok) {
+            weatherRes = await r.json();
+            if (weatherRes && weatherRes.success) {
+              renderWeather(weatherRes);
+            } else {
+              console.warn('Weather API returned failure status:', weatherRes);
+            }
+          } else {
+            console.warn('Weather API returned HTTP error:', r.status);
+          }
+        } catch (e) {
+          console.error('Failed to load weather:', e);
+        }
+      })(),
+      (async () => {
+        try {
+          const r = await fetch(fireUrl);
+          if (r.ok) {
+            fireRes = await r.json();
+            if (fireRes && fireRes.success) {
+              renderFireStatus(fireRes);
+            } else {
+              console.warn('Fire API returned failure status:', fireRes);
+            }
+          } else {
+            console.warn('Fire API returned HTTP error:', r.status);
+          }
+        } catch (e) {
+          console.error('Failed to load fire status:', e);
+        }
+      })(),
+      (async () => {
+        try {
+          const r = await fetch('/api/scouting-data');
+          if (r.ok) {
+            scoutingRes = await r.json();
+            if (scoutingRes && scoutingRes.success) {
+              renderScoutingAlmanac(scoutingRes.data);
+              renderBlogAndEvents(scoutingRes.data);
+            } else {
+              console.warn('Scouting API returned failure status:', scoutingRes);
+            }
+          } else {
+            console.warn('Scouting API returned HTTP error:', r.status);
+          }
+        } catch (e) {
+          console.error('Failed to load scouting data:', e);
+        }
+      })(),
+      (async () => {
+        try {
+          const r = await fetch(alertsUrl);
+          if (r.ok) {
+            alertsRes = await r.json();
+            if (alertsRes && alertsRes.success) {
+              renderForestAlerts(alertsRes);
+            } else {
+              console.warn('Alerts API returned failure status:', alertsRes);
+            }
+          } else {
+            console.warn('Alerts API returned HTTP error:', r.status);
+          }
+        } catch (e) {
+          console.error('Failed to load alerts:', e);
+        }
+      })()
+    ]);
 
-      if (weatherRes.success && fireRes.success) {
+    // Guidelines depend on both weather and fire data
+    if (weatherRes && weatherRes.success && fireRes && fireRes.success) {
+      try {
         updateCampActivityGuidelines(fireRes, weatherRes.data.current);
+      } catch (e) {
+        console.error('Failed to update camp activity guidelines:', e);
       }
-
-      if (scoutingRes.success) {
-        renderScoutingAlmanac(scoutingRes.data);
-        renderBlogAndEvents(scoutingRes.data);
-      }
-    } catch (error) {
-      console.error('API connection failure:', error);
     }
   }
 

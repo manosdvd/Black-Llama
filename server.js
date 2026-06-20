@@ -369,16 +369,17 @@ function getDayOfYear() {
   const oneDay = 1000 * 60 * 60 * 24;
   return Math.floor(diff / oneDay);
 }
+const apiRouter = express.Router();
 
 // REST Endpoint: GET /api/weather
-app.get('/api/weather', async (req, res) => {
+apiRouter.get('/weather', async (req, res) => {
   try {
     const force = req.query.force === 'true';
     const weather = await fetchWeatherData(force);
     
     // Parse out current weather from hourly (first period)
-    const currentHourly = weather.hourly.periods ? weather.hourly.periods[0] : null;
-    const currentDaily = weather.daily.periods ? weather.daily.periods[0] : null;
+    const currentHourly = (weather.hourly && weather.hourly.periods) ? weather.hourly.periods[0] : null;
+    const currentDaily = (weather.daily && weather.daily.periods) ? weather.daily.periods[0] : null;
     const relativeHumidity = 18; // Typical Mt Lemmon summer afternoon humidity %
 
     const currentData = {
@@ -419,7 +420,7 @@ app.get('/api/weather', async (req, res) => {
 
     // Parse Open-Meteo into 10 daily periods
     const forecast10Day = [];
-    if (weather.openMeteo && weather.openMeteo.daily) {
+    if (weather.openMeteo && weather.openMeteo.daily && Array.isArray(weather.openMeteo.daily.time)) {
       const daily = weather.openMeteo.daily;
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       
@@ -427,10 +428,12 @@ app.get('/api/weather', async (req, res) => {
         const dateStr = daily.time[i];
         const date = new Date(dateStr + 'T12:00:00'); // Prevent timezone shift
         const dayName = i === 0 ? 'Today' : daysOfWeek[date.getDay()];
-        const wmoMapping = mapWmoCodeToForecast(daily.weathercode[i]);
+        
+        const wmoCode = (daily.weathercode && daily.weathercode[i] !== undefined) ? daily.weathercode[i] : 0;
+        const wmoMapping = mapWmoCodeToForecast(wmoCode);
         
         // Helper to format wind direction from degrees to compass text
-        const deg = daily.winddirection_10m_dominant[i];
+        const deg = (daily.winddirection_10m_dominant && daily.winddirection_10m_dominant[i] !== undefined) ? daily.winddirection_10m_dominant[i] : 220;
         let dir = 'SW';
         if (deg >= 337.5 || deg < 22.5) dir = 'N';
         else if (deg >= 22.5 && deg < 67.5) dir = 'NE';
@@ -441,17 +444,22 @@ app.get('/api/weather', async (req, res) => {
         else if (deg >= 247.5 && deg < 292.5) dir = 'W';
         else if (deg >= 292.5 && deg < 337.5) dir = 'NW';
 
+        const maxTemp = (daily.temperature_2m_max && daily.temperature_2m_max[i] !== undefined) ? Math.round(daily.temperature_2m_max[i]) : 72;
+        const minTemp = (daily.temperature_2m_min && daily.temperature_2m_min[i] !== undefined) ? Math.round(daily.temperature_2m_min[i]) : 52;
+        const windSpeedVal = (daily.windspeed_10m_max && daily.windspeed_10m_max[i] !== undefined) ? Math.round(daily.windspeed_10m_max[i]) : 10;
+        const precipProb = (daily.precipitation_probability_max && daily.precipitation_probability_max[i] !== undefined) ? daily.precipitation_probability_max[i] : 0;
+
         forecast10Day.push({
           number: i + 1,
           name: dayName,
           date: dateStr,
-          maxTemp: Math.round(daily.temperature_2m_max[i]),
-          minTemp: Math.round(daily.temperature_2m_min[i]),
-          windSpeed: `${Math.round(daily.windspeed_10m_max[i])} mph`,
+          maxTemp: maxTemp,
+          minTemp: minTemp,
+          windSpeed: `${windSpeedVal} mph`,
           windDirection: dir,
           shortForecast: wmoMapping.desc,
           icon: wmoMapping.icon,
-          precipProbability: daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 0
+          precipProbability: precipProb
         });
       }
     }
@@ -472,7 +480,7 @@ app.get('/api/weather', async (req, res) => {
 });
 
 // REST Endpoint: GET /api/fire-status
-app.get('/api/fire-status', async (req, res) => {
+apiRouter.get('/fire-status', async (req, res) => {
   try {
     const force = req.query.force === 'true';
     const config = await readConfig();
@@ -511,7 +519,7 @@ app.get('/api/fire-status', async (req, res) => {
 });
 
 // REST Endpoint: GET /api/forest-alerts
-app.get('/api/forest-alerts', async (req, res) => {
+apiRouter.get('/forest-alerts', async (req, res) => {
   try {
     const force = req.query.force === 'true';
     const config = await readConfig();
@@ -562,7 +570,7 @@ app.get('/api/forest-alerts', async (req, res) => {
 });
 
 // REST Endpoint: GET /api/scouting-data
-app.get('/api/scouting-data', async (req, res) => {
+apiRouter.get('/scouting-data', async (req, res) => {
   try {
     const now = new Date();
     const currentMonth = now.getMonth() + 1; // 1-indexed
@@ -613,7 +621,7 @@ app.get('/api/scouting-data', async (req, res) => {
 });
 
 // REST Endpoint: POST /api/admin/config (PIN authorized)
-app.post('/api/admin/config', async (req, res) => {
+apiRouter.post('/admin/config', async (req, res) => {
   const { pin, fireDanger, campfireRestriction, customAlert, roadStatus, advisoryAlert, bulletinText } = req.body;
   
   if (!pin) {
@@ -643,7 +651,7 @@ app.post('/api/admin/config', async (req, res) => {
 });
 
 // REST Endpoint: GET /api/reservations (PIN authorized)
-app.get('/api/reservations', async (req, res) => {
+apiRouter.get('/reservations', async (req, res) => {
   try {
     const pin = req.query.pin;
     if (!pin) {
@@ -661,7 +669,7 @@ app.get('/api/reservations', async (req, res) => {
 });
 
 // REST Endpoint: POST /api/reservations (Submit a new reservation)
-app.post('/api/reservations', async (req, res) => {
+apiRouter.post('/reservations', async (req, res) => {
   try {
     const { troopNumber, council, scoutsCount, leadersCount, week, campsite, contactName, contactEmail } = req.body;
     if (!troopNumber || !council || !week || !campsite || !contactName || !contactEmail) {
@@ -690,7 +698,7 @@ app.post('/api/reservations', async (req, res) => {
 });
 
 // REST Endpoint: POST /api/admin/blog (PIN authorized)
-app.post('/api/admin/blog', async (req, res) => {
+apiRouter.post('/admin/blog', async (req, res) => {
   try {
     const { pin, title, category, summary } = req.body;
     if (!pin) {
@@ -723,7 +731,7 @@ app.post('/api/admin/blog', async (req, res) => {
 // STAFF APPLICATIONS API
 
 // 1. Submit a new application
-app.post('/api/applications', async (req, res) => {
+apiRouter.post('/applications', async (req, res) => {
   try {
     const appData = req.body;
     if (!appData || !appData.firstName || !appData.lastName || !appData.email) {
@@ -745,7 +753,6 @@ app.post('/api/applications', async (req, res) => {
     const success = await writeApplications(applications);
 
     if (success) {
-      // Simulate Cloud DB Synced / JSON cloud sync
       console.log(`[Cloud Database Sync] Successfully synced staff application ${newApp.id} for ${newApp.firstName} ${newApp.lastName} to cloud storage.`);
       
       res.json({ 
@@ -762,7 +769,7 @@ app.post('/api/applications', async (req, res) => {
 });
 
 // 2. Get all applications (Admin PIN protected)
-app.get('/api/applications', async (req, res) => {
+apiRouter.get('/applications', async (req, res) => {
   try {
     const pin = req.headers['x-admin-pin'] || req.query.pin;
     if (!pin) {
@@ -785,7 +792,7 @@ app.get('/api/applications', async (req, res) => {
 });
 
 // 3. Update application status or notes (Admin PIN protected)
-app.patch('/api/applications/:id', async (req, res) => {
+apiRouter.patch('/applications/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { pin, status, adminNotes } = req.body;
@@ -821,6 +828,10 @@ app.patch('/api/applications/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Mount the Router at both /api and /.netlify/functions/api
+app.use('/api', apiRouter);
+app.use('/.netlify/functions/api', apiRouter);;
 
 
 if (process.env.NODE_ENV !== 'test' && !process.env.NETLIFY && !process.env.LAMBDA_TASK_ROOT) {
