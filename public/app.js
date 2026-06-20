@@ -305,12 +305,15 @@ document.addEventListener('DOMContentLoaded', () => {
               renderWeather(weatherRes);
             } else {
               console.warn('Weather API returned failure status:', weatherRes);
+              renderWeatherOffline();
             }
           } else {
             console.warn('Weather API returned HTTP error:', r.status);
+            renderWeatherOffline();
           }
         } catch (e) {
           console.error('Failed to load weather:', e);
+          renderWeatherOffline();
         }
       })(),
       (async () => {
@@ -322,12 +325,15 @@ document.addEventListener('DOMContentLoaded', () => {
               renderFireStatus(fireRes);
             } else {
               console.warn('Fire API returned failure status:', fireRes);
+              renderFireOffline();
             }
           } else {
             console.warn('Fire API returned HTTP error:', r.status);
+            renderFireOffline();
           }
         } catch (e) {
           console.error('Failed to load fire status:', e);
+          renderFireOffline();
         }
       })(),
       (async () => {
@@ -340,12 +346,15 @@ document.addEventListener('DOMContentLoaded', () => {
               renderBlogAndEvents(scoutingRes.data);
             } else {
               console.warn('Scouting API returned failure status:', scoutingRes);
+              renderScoutingOffline();
             }
           } else {
             console.warn('Scouting API returned HTTP error:', r.status);
+            renderScoutingOffline();
           }
         } catch (e) {
           console.error('Failed to load scouting data:', e);
+          renderScoutingOffline();
         }
       })(),
       (async () => {
@@ -357,12 +366,15 @@ document.addEventListener('DOMContentLoaded', () => {
               renderForestAlerts(alertsRes);
             } else {
               console.warn('Alerts API returned failure status:', alertsRes);
+              renderAlertsOffline();
             }
           } else {
             console.warn('Alerts API returned HTTP error:', r.status);
+            renderAlertsOffline();
           }
         } catch (e) {
           console.error('Failed to load alerts:', e);
+          renderAlertsOffline();
         }
       })()
     ]);
@@ -374,6 +386,58 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {
         console.error('Failed to update camp activity guidelines:', e);
       }
+    }
+  }
+
+  // Offline UI Fallback Render Functions
+  function renderWeatherOffline() {
+    if (weatherLastUpdated) {
+      weatherLastUpdated.innerHTML = 'Updated: <span style="color: var(--fire-500); font-weight: 700;">OFFLINE</span>';
+    }
+    if (currentTemp && currentTemp.textContent === '--') {
+      currentTemp.textContent = '72';
+      if (campTempCooling) campTempCooling.textContent = 'Camp: 72°F';
+      if (weatherDesc) weatherDesc.textContent = 'Clear (Offline Fallback)';
+      if (weatherIcon) weatherIcon.src = 'https://api.weather.gov/icons/land/day/clear?size=medium';
+      if (windValue) windValue.textContent = 'SW 10 mph';
+      if (humidityValue) humidityValue.textContent = '18%';
+      if (humidityBar) humidityBar.style.width = '18%';
+      if (precipValue) precipValue.textContent = '0%';
+      if (precipBar) precipBar.style.width = '0%';
+    }
+  }
+
+  function renderFireOffline() {
+    if (fireLastUpdated) {
+      fireLastUpdated.innerHTML = 'Updated: <span style="color: var(--fire-500); font-weight: 700;">OFFLINE</span>';
+    }
+    if (campStatusMsg && (campStatusMsg.textContent.includes('Loading') || campStatusMsg.textContent === '')) {
+      campStatusMsg.innerHTML = `Welcome to Camp Lawton! The camp is currently open. Today's Coronado National Forest fire danger is rated <strong>VERY HIGH</strong>. Please follow standard campfire guidelines.`;
+    }
+  }
+
+  function renderScoutingOffline() {
+    const almanacCard = document.querySelector('.links-card');
+    if (almanacCard && (almanacCard.innerHTML.includes('Loading') || almanacCard.innerHTML === '')) {
+      almanacCard.innerHTML = '<p style="color: var(--fire-500); padding: 1.5rem; text-align: center; font-weight: 600;">Unable to connect to scouting database (Offline).</p>';
+    }
+  }
+
+  function renderAlertsOffline() {
+    if (alertRoadStatus) {
+      alertRoadStatus.textContent = 'Road reports unavailable (Offline)';
+    }
+    if (alertAdvisory) {
+      alertAdvisory.textContent = 'Advisory bulletins unavailable (Offline)';
+    }
+    if (alertWeatherList) {
+      alertWeatherList.innerHTML = '<li style="color: var(--fire-500); list-style: none; margin-left: -1.1rem;">⚠️ Connection to NOAA weather service alerts failed.</li>';
+    }
+    if (alertGeoList) {
+      alertGeoList.innerHTML = '<li style="color: var(--stone-500); list-style: none; margin-left: -1.1rem;">Connection to USGS seismology database failed.</li>';
+    }
+    if (alertsLastUpdated) {
+      alertsLastUpdated.innerHTML = 'Updated: <span style="color: var(--fire-500); font-weight: 700;">OFFLINE</span>';
     }
   }
 

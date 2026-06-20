@@ -352,7 +352,7 @@ async function fetchSeismicData(force = false) {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=32.4033&longitude=-110.7215&maxradiuskm=200&minmagnitude=1.0&starttime=${thirtyDaysAgo}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, {}, 4000);
     if (res.ok) {
       const json = await res.json();
       geoCache.data = json;
