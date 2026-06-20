@@ -738,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
       phone: document.getElementById('phone').value.trim(),
       email: document.getElementById('email').value.trim(),
       
-      ageGroup: staffAppForm.querySelector('name="ageGroup":checked')?.value || staffAppForm.querySelector('input[name="ageGroup"]:checked')?.value,
+      ageGroup: staffAppForm.querySelector('[name="ageGroup"]:checked')?.value || staffAppForm.querySelector('input[name="ageGroup"]:checked')?.value,
       workAuth: staffAppForm.querySelector('input[name="workAuth"]:checked')?.value,
       scoutingStatus: staffAppForm.querySelector('input[name="scoutingStatus"]:checked')?.value,
       

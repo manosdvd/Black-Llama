@@ -1,5 +1,6 @@
 import express from 'express';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -12,15 +13,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Path to persistent data
-const CONFIG_PATH = path.join(__dirname, 'data', 'config.json');
-const QUOTES_PATH = path.join(__dirname, 'data', 'quotes.json');
-const HISTORY_PATH = path.join(__dirname, 'data', 'scouting_history.json');
-const HOLIDAYS_PATH = path.join(__dirname, 'data', 'holidays.json');
-const BLOG_PATH = path.join(__dirname, 'data', 'blog.json');
-const EVENTS_PATH = path.join(__dirname, 'data', 'events.json');
-const APPLICATIONS_PATH = path.join(__dirname, 'data', 'applications.json');
-const RESERVATIONS_PATH = path.join(__dirname, 'data', 'reservations.json');
+// Path to persistent data using process.cwd() for robust path resolution in serverless
+const DATA_DIR = path.join(process.cwd(), 'data');
+const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
+const QUOTES_PATH = path.join(DATA_DIR, 'quotes.json');
+const HISTORY_PATH = path.join(DATA_DIR, 'scouting_history.json');
+const HOLIDAYS_PATH = path.join(DATA_DIR, 'holidays.json');
+const BLOG_PATH = path.join(DATA_DIR, 'blog.json');
+const EVENTS_PATH = path.join(DATA_DIR, 'events.json');
+const APPLICATIONS_PATH = path.join(DATA_DIR, 'applications.json');
+const RESERVATIONS_PATH = path.join(DATA_DIR, 'reservations.json');
 
 // Caching structure
 let weatherCache = {
@@ -37,15 +39,66 @@ let geoCache = {
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in ms
 const GEO_CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in ms
 
+// Helper to get file path for reading, checking /tmp first for modifications
+function getReadPath(filePath) {
+  const fileName = path.basename(filePath);
+  const tmpPath = path.join('/tmp', 'data', fileName);
+  if (existsSync(tmpPath)) {
+    return tmpPath;
+  }
+  return path.join(process.cwd(), 'data', fileName);
+}
+
 // Helper to read JSON files safely
 async function readJsonFile(filePath, defaultVal = []) {
+  const readPath = getReadPath(filePath);
   try {
-    const data = await fs.readFile(filePath, 'utf8');
+    const data = await fs.readFile(readPath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    console.error(`Error reading ${filePath}, using fallback:`, error.message);
-    return defaultVal;
+    try {
+      const defaultPath = path.join(process.cwd(), 'data', path.basename(filePath));
+      const data = await fs.readFile(defaultPath, 'utf8');
+      return JSON.parse(data);
+    } catch (defaultError) {
+      console.error(`Error reading default ${path.basename(filePath)}, using fallback:`, defaultError.message);
+      return defaultVal;
+    }
   }
+}
+
+// Helper to write JSON files safely, supporting writeable /tmp/data for Netlify Functions
+async function writeJsonFile(filePath, data) {
+  const fileName = path.basename(filePath);
+  const tmpDir = path.join('/tmp', 'data');
+  const tmpPath = path.join(tmpDir, fileName);
+  
+  try {
+    await fs.mkdir(tmpDir, { recursive: true });
+  } catch (err) {
+    // Ignore error
+  }
+
+  const jsonStr = JSON.stringify(data, null, 2);
+  let writeSuccess = false;
+
+  try {
+    await fs.writeFile(tmpPath, jsonStr, 'utf8');
+    writeSuccess = true;
+    console.log(`[Cache Sync] Successfully wrote ${fileName} to /tmp storage.`);
+  } catch (error) {
+    console.error(`Error writing ${fileName} to /tmp:`, error.message);
+  }
+
+  try {
+    const localPath = path.join(process.cwd(), 'data', fileName);
+    await fs.writeFile(localPath, jsonStr, 'utf8');
+    writeSuccess = true;
+  } catch (error) {
+    console.log(`Local write to ${fileName} failed (expected in serverless):`, error.message);
+  }
+
+  return writeSuccess;
 }
 
 // Helper to read camp config
@@ -65,13 +118,7 @@ async function readConfig() {
 
 // Helper to write camp config
 async function writeConfig(config) {
-  try {
-    await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('Error writing config.json:', error);
-    return false;
-  }
+  return writeJsonFile(CONFIG_PATH, config);
 }
 
 // Helpers to read/write applications
@@ -80,13 +127,7 @@ async function readApplications() {
 }
 
 async function writeApplications(applications) {
-  try {
-    await fs.writeFile(APPLICATIONS_PATH, JSON.stringify(applications, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('Error writing applications.json:', error);
-    return false;
-  }
+  return writeJsonFile(APPLICATIONS_PATH, applications);
 }
 
 // NWS API coordinates for Camp Lawton (32.4033, -110.7215)
@@ -640,7 +681,7 @@ app.post('/api/reservations', async (req, res) => {
       contactEmail
     };
     reservations.push(newReservation);
-    await fs.writeFile(RESERVATIONS_PATH, JSON.stringify(reservations, null, 2), 'utf8');
+    await writeJsonFile(RESERVATIONS_PATH, reservations);
     console.log(`[Cloud Database Sync] Successfully synced reservation ${newReservation.id} for ${newReservation.troopNumber} to database.`);
     res.json({ success: true, message: 'Reservation submitted successfully', data: newReservation });
   } catch (error) {
@@ -672,7 +713,7 @@ app.post('/api/admin/blog', async (req, res) => {
       category: category
     };
     blogPosts.unshift(newPost);
-    await fs.writeFile(BLOG_PATH, JSON.stringify(blogPosts, null, 2), 'utf8');
+    await writeJsonFile(BLOG_PATH, blogPosts);
     res.json({ success: true, message: 'Blog post published successfully', data: newPost });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -782,9 +823,13 @@ app.patch('/api/applications/:id', async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`========================================================`);
-  console.log(` Camp Lawton Scout Camp Dashboard running at:`);
-  console.log(` http://localhost:${PORT}`);
-  console.log(`========================================================`);
-});
+if (process.env.NODE_ENV !== 'test' && !process.env.NETLIFY && !process.env.LAMBDA_TASK_ROOT) {
+  app.listen(PORT, () => {
+    console.log(`========================================================`);
+    console.log(` Camp Lawton Scout Camp Dashboard running at:`);
+    console.log(` http://localhost:${PORT}`);
+    console.log(`========================================================`);
+  });
+}
+
+export default app;

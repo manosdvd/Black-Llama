@@ -58,5 +58,17 @@
     "status": "Pending Deposit",
     "contactName": "John Doe",
     "contactEmail": "johndoe@scouting.org"
+  },
+  {
+    "id": "res_1781936558542",
+    "troopNumber": "Troop 999",
+    "council": "Catalina Council",
+    "scoutsCount": 20,
+    "leadersCount": 4,
+    "week": "Week 2 (June 21 - June 27)",
+    "campsite": "Apache",
+    "status": "Pending Deposit",
+    "contactName": "John Test",
+    "contactEmail": "john@test.org"
   }
 ]
