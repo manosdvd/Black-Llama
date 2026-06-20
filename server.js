@@ -140,8 +140,8 @@ const NWS_DAILY_URL = 'https://api.weather.gov/gridpoints/TWC/101,56/forecast';
 const NWS_HOURLY_URL = 'https://api.weather.gov/gridpoints/TWC/101,56/forecast/hourly';
 const NWS_ALERTS_URL = 'https://api.weather.gov/alerts/active?point=32.4033,-110.7215';
 
-// Open-Meteo 10-day Extended Forecast URL
-const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast?latitude=32.4033&longitude=-110.7215&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,winddirection_10m_dominant,precipitation_probability_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FPhoenix&forecast_days=10';
+// Open-Meteo 10-day Extended Forecast URL (with current variables for resilient live fallback)
+const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast?latitude=32.4033&longitude=-110.7215&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,winddirection_10m_dominant,precipitation_probability_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FPhoenix&forecast_days=10';
 
 const HEADERS = {
   'User-Agent': '(CampLawtonPortal, dev@camplawton.org)',
@@ -191,6 +191,20 @@ function mapWmoCodeToForecast(code) {
     99: { desc: 'Heavy Thunderstorms with Hail', icon: 'https://api.weather.gov/icons/land/day/tsra_hi?size=medium' }
   };
   return mapping[code] || { desc: 'Partly Cloudy', icon: 'https://api.weather.gov/icons/land/day/sct?size=medium' };
+}
+
+// Helper to convert wind degrees into compass letters
+function getWindDirectionCompass(deg) {
+  if (deg === undefined || deg === null) return 'SW';
+  if (deg >= 337.5 || deg < 22.5) return 'N';
+  if (deg >= 22.5 && deg < 67.5) return 'NE';
+  if (deg >= 67.5 && deg < 112.5) return 'E';
+  if (deg >= 112.5 && deg < 157.5) return 'SE';
+  if (deg >= 157.5 && deg < 202.5) return 'S';
+  if (deg >= 202.5 && deg < 247.5) return 'SW';
+  if (deg >= 247.5 && deg < 292.5) return 'W';
+  if (deg >= 292.5 && deg < 337.5) return 'NW';
+  return 'SW';
 }
 
 // Generate realistic mock weather in case APIs are down
@@ -292,11 +306,10 @@ function getMockWeather() {
 
 async function fetchWeatherData(force = false) {
   const now = Date.now();
+  
+  // Return cache if it is fresh and we have at least the core Open-Meteo data
   if (
     !force &&
-    weatherCache.daily && 
-    weatherCache.hourly && 
-    weatherCache.alerts && 
     weatherCache.openMeteo && 
     (now - weatherCache.lastUpdated < CACHE_DURATION)
   ) {
@@ -305,32 +318,55 @@ async function fetchWeatherData(force = false) {
 
   console.log('Fetching live weather data from National Weather Service and Open-Meteo...');
   try {
-    // Perform parallel fetches with a 5-second timeout
+    // Perform parallel fetches with catch block on each to prevent single endpoint failure (e.g. NWS) from failing the rest
+    // Note: NWS Alerts uses application/geo+json Accept header so NWS returns GeoJSON with 'features'
     const [dailyRes, hourlyRes, alertsRes, openMeteoRes] = await Promise.all([
-      fetchWithTimeout(NWS_DAILY_URL, { headers: HEADERS }).then(res => res.ok ? res.json() : null),
-      fetchWithTimeout(NWS_HOURLY_URL, { headers: HEADERS }).then(res => res.ok ? res.json() : null),
-      fetchWithTimeout(NWS_ALERTS_URL, { headers: HEADERS }).then(res => res.ok ? res.json() : null),
-      fetchWithTimeout(OPEN_METEO_URL).then(res => res.ok ? res.json() : null)
+      fetchWithTimeout(NWS_DAILY_URL, { headers: HEADERS }).then(res => res.ok ? res.json() : null).catch(() => null),
+      fetchWithTimeout(NWS_HOURLY_URL, { headers: HEADERS }).then(res => res.ok ? res.json() : null).catch(() => null),
+      fetchWithTimeout(NWS_ALERTS_URL, { 
+        headers: {
+          'User-Agent': '(CampLawtonPortal, dev@camplawton.org)',
+          'Accept': 'application/geo+json'
+        }
+      }).then(res => res.ok ? res.json() : null).catch(() => null),
+      fetchWithTimeout(OPEN_METEO_URL).then(res => res.ok ? res.json() : null).catch(() => null)
     ]);
 
-    if (!dailyRes || !hourlyRes || !alertsRes || !openMeteoRes) {
-      console.warn('One or more Weather API requests failed, using partial cache or fallback details...');
-      throw new Error('Partial API response failure');
+    // Open-Meteo is our core weather source because NWS is fragile and rate-limited on serverless platforms.
+    // If Open-Meteo fails and we have no cached version, we must fall back to mock weather.
+    if (!openMeteoRes && !weatherCache.openMeteo) {
+      console.warn('Core weather API (Open-Meteo) and cache failed. Falling back to mock weather.');
+      throw new Error('Core API failure');
     }
 
-    weatherCache.daily = dailyRes;
-    weatherCache.hourly = hourlyRes;
-    weatherCache.alerts = alertsRes;
-    weatherCache.openMeteo = openMeteoRes;
+    // Update cache with whatever fresh data we retrieved
+    if (openMeteoRes) {
+      weatherCache.openMeteo = openMeteoRes;
+    }
+    
+    // NWS endpoints are optional. If they succeeded, update cache. Otherwise keep previous cached NWS data.
+    if (dailyRes) weatherCache.daily = dailyRes;
+    if (hourlyRes) weatherCache.hourly = hourlyRes;
+    if (alertsRes) weatherCache.alerts = alertsRes;
+    
     weatherCache.lastUpdated = now;
 
-    return { ...weatherCache, source: 'live' };
+    // Determine the source description
+    let source = 'live';
+    if (!dailyRes || !hourlyRes || !alertsRes) {
+      source = 'partial-live';
+    }
+
+    return { ...weatherCache, source };
   } catch (error) {
-    console.error('Weather API failure, serving mock/cached weather data:', error.message);
-    if (weatherCache.daily && weatherCache.hourly && weatherCache.openMeteo) {
+    console.error('Weather API failure, serving cached or mock weather data:', error.message);
+    
+    // If we have any cache, return it
+    if (weatherCache.openMeteo) {
       return { ...weatherCache, source: 'stale-cache' };
     }
     
+    // Otherwise return mock
     const mock = getMockWeather();
     return {
       daily: mock.daily,
@@ -390,39 +426,68 @@ apiRouter.get('/weather', async (req, res) => {
     // Parse out current weather from hourly (first period)
     const currentHourly = (weather.hourly && weather.hourly.periods) ? weather.hourly.periods[0] : null;
     const currentDaily = (weather.daily && weather.daily.periods) ? weather.daily.periods[0] : null;
-    const relativeHumidity = 18; // Typical Mt Lemmon summer afternoon humidity %
+    
+    // Core fallback: if NWS hourly/daily forecasts failed or are blocked, we use Open-Meteo's live 'current' variables
+    const openMeteoCurrent = (weather.openMeteo && weather.openMeteo.current) ? weather.openMeteo.current : null;
+    const wmoMapping = (openMeteoCurrent && openMeteoCurrent.weather_code !== undefined) 
+      ? mapWmoCodeToForecast(openMeteoCurrent.weather_code) 
+      : null;
 
     const currentData = {
-      temperature: currentHourly ? currentHourly.temperature : (currentDaily ? currentDaily.temperature : 72),
-      shortForecast: currentHourly ? currentHourly.shortForecast : (currentDaily ? currentDaily.shortForecast : 'Sunny'),
-      windSpeed: currentHourly ? currentHourly.windSpeed : (currentDaily ? currentDaily.windSpeed : '10 mph'),
-      windDirection: currentHourly ? currentHourly.windDirection : (currentDaily ? currentDaily.windDirection : 'SW'),
-      relativeHumidity: relativeHumidity,
-      precipProbability: (currentHourly && currentHourly.probabilityOfPrecipitation && currentHourly.probabilityOfPrecipitation.value !== null) ? currentHourly.probabilityOfPrecipitation.value : 0,
-      icon: currentHourly ? currentHourly.icon : (currentDaily ? currentDaily.icon : 'https://api.weather.gov/icons/land/day/clear?size=medium'),
+      temperature: currentHourly ? currentHourly.temperature 
+        : (currentDaily ? currentDaily.temperature 
+        : (openMeteoCurrent ? Math.round(openMeteoCurrent.temperature_2m) : 72)),
+      
+      shortForecast: currentHourly ? currentHourly.shortForecast 
+        : (currentDaily ? currentDaily.shortForecast 
+        : (wmoMapping ? wmoMapping.desc : 'Sunny')),
+      
+      windSpeed: currentHourly ? currentHourly.windSpeed 
+        : (currentDaily ? currentDaily.windSpeed 
+        : (openMeteoCurrent ? `${Math.round(openMeteoCurrent.wind_speed_10m)} mph` : '10 mph')),
+      
+      windDirection: currentHourly ? currentHourly.windDirection 
+        : (currentDaily ? currentDaily.windDirection 
+        : (openMeteoCurrent ? getWindDirectionCompass(openMeteoCurrent.wind_direction_10m) : 'SW')),
+      
+      relativeHumidity: (currentHourly && currentHourly.relativeHumidity) ? currentHourly.relativeHumidity
+        : (openMeteoCurrent ? openMeteoCurrent.relative_humidity_2m : 18),
+      
+      precipProbability: (currentHourly && currentHourly.probabilityOfPrecipitation && currentHourly.probabilityOfPrecipitation.value !== null) 
+        ? currentHourly.probabilityOfPrecipitation.value 
+        : ((weather.openMeteo && weather.openMeteo.daily && weather.openMeteo.daily.precipitation_probability_max) 
+          ? weather.openMeteo.daily.precipitation_probability_max[0] || 0 
+          : 0),
+      
+      icon: currentHourly ? currentHourly.icon 
+        : (currentDaily ? currentDaily.icon 
+        : (wmoMapping ? wmoMapping.icon : 'https://api.weather.gov/icons/land/day/clear?size=medium')),
+      
       elevation: 7000
     };
 
-    // Filter to active Red Flag Warnings or Fire Weather Watches
+    // Filter to active Red Flag Warnings or Fire Weather Watches (safely guarded)
     const alertsList = [];
     if (weather.alerts && weather.alerts.features) {
       for (const feature of weather.alerts.features) {
         const props = feature.properties;
         if (
-          props.event.toLowerCase().includes('red flag') ||
-          props.event.toLowerCase().includes('fire weather') ||
-          props.event.toLowerCase().includes('high wind')
+          props &&
+          props.event &&
+          (props.event.toLowerCase().includes('red flag') ||
+           props.event.toLowerCase().includes('fire weather') ||
+           props.event.toLowerCase().includes('high wind'))
         ) {
           alertsList.push({
             id: props.id,
             event: props.event,
-            severity: props.severity,
-            urgency: props.urgency,
-            headline: props.headline,
-            description: props.description,
-            instruction: props.instruction,
-            effective: props.effective,
-            ends: props.ends || props.expires
+            severity: props.severity || 'Minor',
+            urgency: props.urgency || 'Unknown',
+            headline: props.headline || props.event,
+            description: props.description || '',
+            instruction: props.instruction || '',
+            effective: props.effective || new Date().toISOString(),
+            ends: props.ends || props.expires || new Date().toISOString()
           });
         }
       }
@@ -444,15 +509,7 @@ apiRouter.get('/weather', async (req, res) => {
         
         // Helper to format wind direction from degrees to compass text
         const deg = (daily.winddirection_10m_dominant && daily.winddirection_10m_dominant[i] !== undefined) ? daily.winddirection_10m_dominant[i] : 220;
-        let dir = 'SW';
-        if (deg >= 337.5 || deg < 22.5) dir = 'N';
-        else if (deg >= 22.5 && deg < 67.5) dir = 'NE';
-        else if (deg >= 67.5 && deg < 112.5) dir = 'E';
-        else if (deg >= 112.5 && deg < 157.5) dir = 'SE';
-        else if (deg >= 157.5 && deg < 202.5) dir = 'S';
-        else if (deg >= 202.5 && deg < 247.5) dir = 'SW';
-        else if (deg >= 247.5 && deg < 292.5) dir = 'W';
-        else if (deg >= 292.5 && deg < 337.5) dir = 'NW';
+        const dir = getWindDirectionCompass(deg);
 
         const maxTemp = (daily.temperature_2m_max && daily.temperature_2m_max[i] !== undefined) ? Math.round(daily.temperature_2m_max[i]) : 72;
         const minTemp = (daily.temperature_2m_min && daily.temperature_2m_min[i] !== undefined) ? Math.round(daily.temperature_2m_min[i]) : 52;
@@ -496,17 +553,17 @@ apiRouter.get('/fire-status', async (req, res) => {
     const config = await readConfig();
     const weather = await fetchWeatherData(force);
     
-    // Check if there's a live Red Flag Warning from NWS
+    // Check if there's a live Red Flag Warning from NWS (safely guarded)
     const redFlagWarnings = [];
     if (weather.alerts && weather.alerts.features) {
       for (const feature of weather.alerts.features) {
         const props = feature.properties;
-        if (props.event.toLowerCase().includes('red flag')) {
+        if (props && props.event && props.event.toLowerCase().includes('red flag')) {
           redFlagWarnings.push({
             event: props.event,
-            headline: props.headline,
-            instruction: props.instruction || props.description,
-            ends: props.ends || props.expires
+            headline: props.headline || props.event,
+            instruction: props.instruction || props.description || '',
+            ends: props.ends || props.expires || new Date().toISOString()
           });
         }
       }
@@ -536,18 +593,20 @@ apiRouter.get('/forest-alerts', async (req, res) => {
     const weather = await fetchWeatherData(force);
     const seismic = await fetchSeismicData(force);
 
-    // Filter NWS alerts
+    // Filter NWS alerts (safely guarded)
     const nwsAlerts = [];
     if (weather.alerts && weather.alerts.features) {
       for (const feature of weather.alerts.features) {
         const props = feature.properties;
-        nwsAlerts.push({
-          event: props.event,
-          headline: props.headline,
-          severity: props.severity,
-          instruction: props.instruction || props.description,
-          ends: props.ends || props.expires
-        });
+        if (props && props.event) {
+          nwsAlerts.push({
+            event: props.event,
+            headline: props.headline || props.event,
+            severity: props.severity || 'Minor',
+            instruction: props.instruction || props.description || '',
+            ends: props.ends || props.expires || new Date().toISOString()
+          });
+        }
       }
     }
 
@@ -556,12 +615,14 @@ apiRouter.get('/forest-alerts', async (req, res) => {
     if (seismic && seismic.features) {
       for (const feature of seismic.features) {
         const props = feature.properties;
-        earthquakes.push({
-          mag: props.mag,
-          place: props.place,
-          time: props.time,
-          url: props.url
-        });
+        if (props) {
+          earthquakes.push({
+            mag: props.mag,
+            place: props.place || 'Unknown Location',
+            time: props.time || Date.now(),
+            url: props.url || '#'
+          });
+        }
       }
     }
 

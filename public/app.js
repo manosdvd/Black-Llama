@@ -486,6 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (weatherRes.source === 'live') {
         sourceHTML = '<span style="color: #2ecc71; font-weight: 700;">LIVE</span>';
+      } else if (weatherRes.source === 'partial-live') {
+        sourceHTML = '<span style="color: #2ecc71; font-weight: 700;">LIVE (FALLBACK)</span>';
       } else if (weatherRes.source === 'cache') {
         sourceHTML = '<span style="color: var(--ember-500); font-weight: 700;">CACHED</span>';
       } else if (weatherRes.source === 'stale-cache') {
@@ -635,6 +637,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (alertsRes.source === 'live') {
         sourceHTML = '<span style="color: #2ecc71; font-weight: 700;">LIVE</span>';
+      } else if (alertsRes.source === 'partial-live') {
+        sourceHTML = '<span style="color: #2ecc71; font-weight: 700;">LIVE (FALLBACK)</span>';
       } else if (alertsRes.source === 'cache') {
         sourceHTML = '<span style="color: var(--ember-500); font-weight: 700;">CACHED</span>';
       } else if (alertsRes.source === 'stale-cache') {
