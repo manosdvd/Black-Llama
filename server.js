@@ -39,12 +39,16 @@ let geoCache = {
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in ms
 const GEO_CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in ms
 
-// Helper to get file path for reading, checking /tmp first for modifications
+const isServerless = !!(process.env.NETLIFY || process.env.LAMBDA_TASK_ROOT || process.env.AWS_EXECUTION_ENV);
+
+// Helper to get file path for reading, checking /tmp first only in serverless environments
 function getReadPath(filePath) {
   const fileName = path.basename(filePath);
-  const tmpPath = path.join('/tmp', 'data', fileName);
-  if (existsSync(tmpPath)) {
-    return tmpPath;
+  if (isServerless) {
+    const tmpPath = path.join('/tmp', 'data', fileName);
+    if (existsSync(tmpPath)) {
+      return tmpPath;
+    }
   }
   return path.join(process.cwd(), 'data', fileName);
 }
@@ -70,24 +74,20 @@ async function readJsonFile(filePath, defaultVal = []) {
 // Helper to write JSON files safely, supporting writeable /tmp/data for Netlify Functions
 async function writeJsonFile(filePath, data) {
   const fileName = path.basename(filePath);
-  const tmpDir = path.join('/tmp', 'data');
-  const tmpPath = path.join(tmpDir, fileName);
-  
-  try {
-    await fs.mkdir(tmpDir, { recursive: true });
-  } catch (err) {
-    // Ignore error
-  }
-
   const jsonStr = JSON.stringify(data, null, 2);
   let writeSuccess = false;
 
-  try {
-    await fs.writeFile(tmpPath, jsonStr, 'utf8');
-    writeSuccess = true;
-    console.log(`[Cache Sync] Successfully wrote ${fileName} to /tmp storage.`);
-  } catch (error) {
-    console.error(`Error writing ${fileName} to /tmp:`, error.message);
+  if (isServerless) {
+    const tmpDir = path.join('/tmp', 'data');
+    const tmpPath = path.join(tmpDir, fileName);
+    try {
+      await fs.mkdir(tmpDir, { recursive: true });
+      await fs.writeFile(tmpPath, jsonStr, 'utf8');
+      writeSuccess = true;
+      console.log(`[Cache Sync] Successfully wrote ${fileName} to /tmp storage.`);
+    } catch (error) {
+      console.error(`Error writing ${fileName} to /tmp:`, error.message);
+    }
   }
 
   try {
@@ -95,7 +95,11 @@ async function writeJsonFile(filePath, data) {
     await fs.writeFile(localPath, jsonStr, 'utf8');
     writeSuccess = true;
   } catch (error) {
-    console.log(`Local write to ${fileName} failed (expected in serverless):`, error.message);
+    if (isServerless) {
+      console.log(`Local write to ${fileName} failed (expected in serverless):`, error.message);
+    } else {
+      console.error(`Local write to ${fileName} failed:`, error.message);
+    }
   }
 
   return writeSuccess;
@@ -370,6 +374,12 @@ function getDayOfYear() {
   return Math.floor(diff / oneDay);
 }
 const apiRouter = express.Router();
+
+// Disable response caching for all API endpoints to prevent stale data sync issues
+apiRouter.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
 
 // REST Endpoint: GET /api/weather
 apiRouter.get('/weather', async (req, res) => {
